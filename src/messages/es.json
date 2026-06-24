@@ -1,0 +1,87 @@
+{
+  "common": {
+    "home": "Inicio",
+    "dashboard": "Panel",
+    "login": "Iniciar sesión",
+    "register": "Registrarse",
+    "logout": "Cerrar sesión",
+    "profile": "Perfil",
+    "settings": "Configuración",
+    "submit": "Enviar",
+    "cancel": "Cancelar",
+    "save": "Guardar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "create": "Crear",
+    "search": "Buscar",
+    "loading": "Cargando...",
+    "success": "Éxito",
+    "error": "Error",
+    "back": "Volver"
+  },
+  "auth": {
+    "welcomeBack": "Bienvenido de nuevo",
+    "signInToAccount": "Inicia sesión en tu cuenta",
+    "createAccount": "Crear cuenta",
+    "startEarning": "Empieza a ganar con OnlineBuzz Mall",
+    "username": "Usuario o correo electrónico",
+    "password": "Contraseña",
+    "confirmPassword": "Confirmar contraseña",
+    "forgotPassword": "¿Olvidaste tu contraseña?",
+    "rememberMe": "Recordarme",
+    "noAccount": "¿No tienes cuenta?",
+    "hasAccount": "¿Ya tienes cuenta?",
+    "signUp": "Registrarse",
+    "signIn": "Iniciar sesión"
+  },
+  "dashboard": {
+    "welcomeBack": "Bienvenido, {name}! 👋",
+    "accountOverview": "Resumen de tu cuenta",
+    "balance": "Saldo",
+    "totalDeposit": "Depósito total",
+    "totalWithdraw": "Retiro total",
+    "totalProfit": "Ganancia total",
+    "ordersCompleted": "Pedidos completados",
+    "referrals": "Referidos",
+    "quickActions": "Acciones rápidas",
+    "startOrder": "Iniciar pedido",
+    "deposit": "Depositar",
+    "withdraw": "Retirar",
+    "invite": "Invitar"
+  },
+  "orders": {
+    "title": "Pedidos",
+    "subtitle": "Completa pedidos para ganar",
+    "currentOrder": "Pedido actual",
+    "orderNo": "N° de pedido",
+    "orderAmount": "Monto del pedido",
+    "expectedProfit": "Ganancia esperada",
+    "submitOrder": "Enviar pedido",
+    "completed": "Completado",
+    "pending": "Pendiente",
+    "insufficientBalance": "Saldo insuficiente",
+    "noActiveOrder": "Sin pedido activo"
+  },
+  "deposit": {
+    "title": "Depósito",
+    "subtitle": "Agrega fondos con criptomonedas",
+    "newDeposit": "Depósito cripto",
+    "paymentMethod": "Método de pago",
+    "amount": "Monto (USD)",
+    "history": "Historial de depósitos"
+  },
+  "withdraw": {
+    "title": "Retiro",
+    "subtitle": "Retira fondos de tu cuenta",
+    "availableBalance": "Saldo disponible",
+    "newWithdrawal": "Nuevo retiro",
+    "method": "Método de retiro",
+    "history": "Historial de retiros"
+  },
+  "invite": {
+    "title": "Invitar amigos",
+    "subtitle": "Gana comisiones de tu red de referidos",
+    "yourLink": "Tu enlace de referido",
+    "shareLink": "Comparte este enlace con amigos"
+  }
+}

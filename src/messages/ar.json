@@ -1,0 +1,87 @@
+{
+  "common": {
+    "home": "الرئيسية",
+    "dashboard": "لوحة التحكم",
+    "login": "تسجيل الدخول",
+    "register": "إنشاء حساب",
+    "logout": "تسجيل الخروج",
+    "profile": "الملف الشخصي",
+    "settings": "الإعدادات",
+    "submit": "إرسال",
+    "cancel": "إلغاء",
+    "save": "حفظ",
+    "delete": "حذف",
+    "edit": "تعديل",
+    "create": "إنشاء",
+    "search": "بحث",
+    "loading": "جاري التحميل...",
+    "success": "نجاح",
+    "error": "خطأ",
+    "back": "رجوع"
+  },
+  "auth": {
+    "welcomeBack": "مرحباً بعودتك",
+    "signInToAccount": "سجل دخول إلى حسابك",
+    "createAccount": "إنشاء حساب",
+    "startEarning": "ابدأ الربح مع OnlineBuzz Mall",
+    "username": "اسم المستخدم أو البريد الإلكتروني",
+    "password": "كلمة المرور",
+    "confirmPassword": "تأكيد كلمة المرور",
+    "forgotPassword": "نسيت كلمة المرور؟",
+    "rememberMe": "تذكرني",
+    "noAccount": "ليس لديك حساب؟",
+    "hasAccount": "لديك حساب بالفعل؟",
+    "signUp": "إنشاء حساب",
+    "signIn": "تسجيل الدخول"
+  },
+  "dashboard": {
+    "welcomeBack": "مرحباً بعودتك، {name}! 👋",
+    "accountOverview": "نظرة عامة على حسابك",
+    "balance": "الرصيد",
+    "totalDeposit": "إجمالي الإيداع",
+    "totalWithdraw": "إجمالي السحب",
+    "totalProfit": "إجمالي الأرباح",
+    "ordersCompleted": "الطلبات المكتملة",
+    "referrals": "الإحالات",
+    "quickActions": "إجراءات سريعة",
+    "startOrder": "بدء طلب",
+    "deposit": "إيداع",
+    "withdraw": "سحب",
+    "invite": "دعوة"
+  },
+  "orders": {
+    "title": "الطلبات",
+    "subtitle": "أكمل الطلبات لكسب الأرباح",
+    "currentOrder": "الطلب الحالي",
+    "orderNo": "رقم الطلب",
+    "orderAmount": "مبلغ الطلب",
+    "expectedProfit": "الربح المتوقع",
+    "submitOrder": "إرسال الطلب",
+    "completed": "مكتمل",
+    "pending": "قيد الانتظار",
+    "insufficientBalance": "رصيد غير كافٍ",
+    "noActiveOrder": "لا يوجد طلب نشط"
+  },
+  "deposit": {
+    "title": "إيداع",
+    "subtitle": "أضف أموالاً عبر العملات المشفرة",
+    "newDeposit": "إيداع عملات مشفرة",
+    "paymentMethod": "طريقة الدفع",
+    "amount": "المبلغ (دولار)",
+    "history": "سجل الإيداع"
+  },
+  "withdraw": {
+    "title": "سحب",
+    "subtitle": "سحب أموال من حسابك",
+    "availableBalance": "الرصيد المتاح",
+    "newWithdrawal": "سحب جديد",
+    "method": "طريقة السحب",
+    "history": "سجل السحب"
+  },
+  "invite": {
+    "title": "دعوة أصدقاء",
+    "subtitle": "اربح عمولات من شبكة الإحالة الخاصة بك",
+    "yourLink": "رابط الإحالة الخاص بك",
+    "shareLink": "شارك هذا الرابط مع الأصدقاء"
+  }
+}

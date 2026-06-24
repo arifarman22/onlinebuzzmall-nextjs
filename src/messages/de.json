@@ -1,0 +1,87 @@
+{
+  "common": {
+    "home": "Startseite",
+    "dashboard": "Dashboard",
+    "login": "Anmelden",
+    "register": "Registrieren",
+    "logout": "Abmelden",
+    "profile": "Profil",
+    "settings": "Einstellungen",
+    "submit": "Absenden",
+    "cancel": "Abbrechen",
+    "save": "Speichern",
+    "delete": "Löschen",
+    "edit": "Bearbeiten",
+    "create": "Erstellen",
+    "search": "Suchen",
+    "loading": "Laden...",
+    "success": "Erfolg",
+    "error": "Fehler",
+    "back": "Zurück"
+  },
+  "auth": {
+    "welcomeBack": "Willkommen zurück",
+    "signInToAccount": "Melden Sie sich an",
+    "createAccount": "Konto erstellen",
+    "startEarning": "Beginnen Sie mit OnlineBuzz Mall zu verdienen",
+    "username": "Benutzername oder E-Mail",
+    "password": "Passwort",
+    "confirmPassword": "Passwort bestätigen",
+    "forgotPassword": "Passwort vergessen?",
+    "rememberMe": "Angemeldet bleiben",
+    "noAccount": "Kein Konto?",
+    "hasAccount": "Bereits ein Konto?",
+    "signUp": "Registrieren",
+    "signIn": "Anmelden"
+  },
+  "dashboard": {
+    "welcomeBack": "Willkommen zurück, {name}! 👋",
+    "accountOverview": "Kontoübersicht",
+    "balance": "Guthaben",
+    "totalDeposit": "Gesamteinzahlung",
+    "totalWithdraw": "Gesamtauszahlung",
+    "totalProfit": "Gesamtgewinn",
+    "ordersCompleted": "Abgeschlossene Bestellungen",
+    "referrals": "Empfehlungen",
+    "quickActions": "Schnellaktionen",
+    "startOrder": "Bestellung starten",
+    "deposit": "Einzahlen",
+    "withdraw": "Auszahlen",
+    "invite": "Einladen"
+  },
+  "orders": {
+    "title": "Bestellungen",
+    "subtitle": "Bestellungen abschließen und Gewinne erzielen",
+    "currentOrder": "Aktuelle Bestellung",
+    "orderNo": "Bestellnr.",
+    "orderAmount": "Bestellbetrag",
+    "expectedProfit": "Erwarteter Gewinn",
+    "submitOrder": "Bestellung absenden",
+    "completed": "Abgeschlossen",
+    "pending": "Ausstehend",
+    "insufficientBalance": "Unzureichendes Guthaben",
+    "noActiveOrder": "Keine aktive Bestellung"
+  },
+  "deposit": {
+    "title": "Einzahlung",
+    "subtitle": "Geld per Kryptowährung hinzufügen",
+    "newDeposit": "Krypto-Einzahlung",
+    "paymentMethod": "Zahlungsmethode",
+    "amount": "Betrag (USD)",
+    "history": "Einzahlungsverlauf"
+  },
+  "withdraw": {
+    "title": "Auszahlung",
+    "subtitle": "Geld von Ihrem Konto abheben",
+    "availableBalance": "Verfügbares Guthaben",
+    "newWithdrawal": "Neue Auszahlung",
+    "method": "Auszahlungsmethode",
+    "history": "Auszahlungsverlauf"
+  },
+  "invite": {
+    "title": "Freunde einladen",
+    "subtitle": "Verdienen Sie Provisionen aus Ihrem Netzwerk",
+    "yourLink": "Ihr Empfehlungslink",
+    "shareLink": "Teilen Sie diesen Link mit Freunden"
+  }
+}

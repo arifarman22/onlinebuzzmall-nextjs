@@ -1,0 +1,87 @@
+{
+  "common": {
+    "home": "Accueil",
+    "dashboard": "Tableau de bord",
+    "login": "Connexion",
+    "register": "Inscription",
+    "logout": "Déconnexion",
+    "profile": "Profil",
+    "settings": "Paramètres",
+    "submit": "Soumettre",
+    "cancel": "Annuler",
+    "save": "Enregistrer",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "create": "Créer",
+    "search": "Rechercher",
+    "loading": "Chargement...",
+    "success": "Succès",
+    "error": "Erreur",
+    "back": "Retour"
+  },
+  "auth": {
+    "welcomeBack": "Bon retour",
+    "signInToAccount": "Connectez-vous à votre compte",
+    "createAccount": "Créer un compte",
+    "startEarning": "Commencez à gagner avec OnlineBuzz Mall",
+    "username": "Nom d'utilisateur ou e-mail",
+    "password": "Mot de passe",
+    "confirmPassword": "Confirmer le mot de passe",
+    "forgotPassword": "Mot de passe oublié?",
+    "rememberMe": "Se souvenir de moi",
+    "noAccount": "Pas de compte?",
+    "hasAccount": "Déjà un compte?",
+    "signUp": "S'inscrire",
+    "signIn": "Se connecter"
+  },
+  "dashboard": {
+    "welcomeBack": "Bon retour, {name}! 👋",
+    "accountOverview": "Aperçu de votre compte",
+    "balance": "Solde",
+    "totalDeposit": "Dépôt total",
+    "totalWithdraw": "Retrait total",
+    "totalProfit": "Profit total",
+    "ordersCompleted": "Commandes terminées",
+    "referrals": "Parrainages",
+    "quickActions": "Actions rapides",
+    "startOrder": "Commencer",
+    "deposit": "Dépôt",
+    "withdraw": "Retrait",
+    "invite": "Inviter"
+  },
+  "orders": {
+    "title": "Commandes",
+    "subtitle": "Complétez les commandes pour gagner des profits",
+    "currentOrder": "Commande actuelle",
+    "orderNo": "N° de commande",
+    "orderAmount": "Montant",
+    "expectedProfit": "Profit attendu",
+    "submitOrder": "Soumettre la commande",
+    "completed": "Terminé",
+    "pending": "En attente",
+    "insufficientBalance": "Solde insuffisant",
+    "noActiveOrder": "Aucune commande active"
+  },
+  "deposit": {
+    "title": "Dépôt",
+    "subtitle": "Ajoutez des fonds via crypto-monnaie",
+    "newDeposit": "Dépôt crypto",
+    "paymentMethod": "Méthode de paiement",
+    "amount": "Montant (USD)",
+    "history": "Historique des dépôts"
+  },
+  "withdraw": {
+    "title": "Retrait",
+    "subtitle": "Retirez des fonds de votre compte",
+    "availableBalance": "Solde disponible",
+    "newWithdrawal": "Nouveau retrait",
+    "method": "Méthode de retrait",
+    "history": "Historique des retraits"
+  },
+  "invite": {
+    "title": "Inviter des amis",
+    "subtitle": "Gagnez des commissions grâce à votre réseau",
+    "yourLink": "Votre lien de parrainage",
+    "shareLink": "Partagez ce lien avec vos amis"
+  }
+}

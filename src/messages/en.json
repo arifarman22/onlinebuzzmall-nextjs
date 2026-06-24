@@ -1,0 +1,87 @@
+{
+  "common": {
+    "home": "Home",
+    "dashboard": "Dashboard",
+    "login": "Login",
+    "register": "Register",
+    "logout": "Logout",
+    "profile": "Profile",
+    "settings": "Settings",
+    "submit": "Submit",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "search": "Search",
+    "loading": "Loading...",
+    "success": "Success",
+    "error": "Error",
+    "back": "Back"
+  },
+  "auth": {
+    "welcomeBack": "Welcome Back",
+    "signInToAccount": "Sign in to your account",
+    "createAccount": "Create Account",
+    "startEarning": "Start earning with OnlineBuzz Mall",
+    "username": "Username or Email",
+    "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "forgotPassword": "Forgot password?",
+    "rememberMe": "Remember me",
+    "noAccount": "Don't have an account?",
+    "hasAccount": "Already have an account?",
+    "signUp": "Sign Up",
+    "signIn": "Sign In"
+  },
+  "dashboard": {
+    "welcomeBack": "Welcome back, {name}! 👋",
+    "accountOverview": "Here's your account overview",
+    "balance": "Balance",
+    "totalDeposit": "Total Deposit",
+    "totalWithdraw": "Total Withdraw",
+    "totalProfit": "Total Profit",
+    "ordersCompleted": "Orders Completed",
+    "referrals": "Referrals",
+    "quickActions": "Quick Actions",
+    "startOrder": "Start Order",
+    "deposit": "Deposit",
+    "withdraw": "Withdraw",
+    "invite": "Invite"
+  },
+  "orders": {
+    "title": "Orders",
+    "subtitle": "Complete orders to earn profits",
+    "currentOrder": "Current Order",
+    "orderNo": "Order No",
+    "orderAmount": "Order Amount",
+    "expectedProfit": "Expected Profit",
+    "submitOrder": "Submit Order",
+    "completed": "Completed",
+    "pending": "Pending",
+    "insufficientBalance": "Insufficient balance",
+    "noActiveOrder": "No active order set assigned"
+  },
+  "deposit": {
+    "title": "Deposit",
+    "subtitle": "Add funds via cryptocurrency",
+    "newDeposit": "Crypto Deposit",
+    "paymentMethod": "Payment Method",
+    "amount": "Amount (USD)",
+    "history": "Deposit History"
+  },
+  "withdraw": {
+    "title": "Withdraw",
+    "subtitle": "Withdraw funds from your account",
+    "availableBalance": "Available Balance",
+    "newWithdrawal": "New Withdrawal",
+    "method": "Withdrawal Method",
+    "history": "Withdrawal History"
+  },
+  "invite": {
+    "title": "Invite Friends",
+    "subtitle": "Earn commissions from your referral network",
+    "yourLink": "Your Referral Link",
+    "shareLink": "Share this link with friends"
+  }
+}

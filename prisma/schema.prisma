@@ -1,0 +1,833 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                     Int                     @id @default(autoincrement())
+  pos_id                 Int?
+  position               Int?
+  plan_id                Int                     @default(0)
+  total_invest           Float                   @default(0)
+  total_ref_com          Float                   @default(0)
+  total_binary_com       Float                   @default(0)
+  firstname              String?
+  lastname               String?
+  username               String                  @unique
+  email                  String                  @unique
+  country_code           String?
+  mobile                 String?
+  ref_by                 Int?
+  balance                Float                   @default(0)
+  password               String
+  withdrawal_password    String?
+  image                  String?
+  address                String?                 @db.LongText
+  status                 Int                     @default(1)
+  kyc_data               String?                 @db.LongText
+  kv                     Int                     @default(0)
+  ev                     Int                     @default(0)
+  sv                     Int                     @default(0)
+  profile_complete       Int                     @default(0)
+  ver_code               String?
+  ver_code_send_at       DateTime?
+  ts                     Int                     @default(0)
+  tsc                    String?
+  remember_token         String?
+  commission             Float                   @default(0)
+  created_at             DateTime                @default(now())
+  updated_at             DateTime                @updatedAt
+  daily_order_limit      Int                     @default(40)
+  freeze_amount          Float                   @default(0)
+  rank_id                Int                     @default(0)
+  commissionTransactions CommissionTransaction[]
+  deposits               Deposit[]
+  orderCompletes         OrderComplete[]
+  orderSetAssigns        OrderSetAssign[]
+  supportTickets         SupportTicket[]
+  transactions           Transaction[]
+  userExtra              UserExtra?
+  loginLogs              UserLogin[]
+  referrer               User?                   @relation("UserReferrals", fields: [ref_by], references: [id])
+  referrals              User[]                  @relation("UserReferrals")
+  withdrawals            Withdrawal[]
+
+  @@index([ref_by], map: "users_ref_by_fkey")
+  @@map("users")
+}
+
+model Admin {
+  id             Int       @id @default(autoincrement())
+  name           String
+  email          String    @unique
+  username       String    @unique
+  image          String?
+  password       String
+  remember_token String?
+  created_at     DateTime  @default(now())
+  updated_at     DateTime  @updatedAt
+  user_id        Int?
+  role_id        Int?      @default(1)
+  reset_code     String?   @db.VarChar(10)
+  reset_code_at  DateTime? @db.DateTime(0)
+  role           Role?     @relation(fields: [role_id], references: [id])
+
+  @@index([role_id], map: "admins_role_id_fkey")
+  @@map("admins")
+}
+
+model Role {
+  id          Int              @id @default(autoincrement())
+  name        String           @unique
+  slug        String           @unique
+  description String?
+  is_default  Int              @default(0)
+  created_at  DateTime         @default(now())
+  updated_at  DateTime         @updatedAt
+  admins      Admin[]
+  permissions RolePermission[]
+
+  @@map("roles")
+}
+
+model Permission {
+  id          Int              @id @default(autoincrement())
+  name        String
+  slug        String           @unique
+  group       String
+  description String?
+  created_at  DateTime         @default(now())
+  updated_at  DateTime         @updatedAt
+  roles       RolePermission[]
+
+  @@map("permissions")
+}
+
+model RolePermission {
+  id            Int        @id @default(autoincrement())
+  role_id       Int
+  permission_id Int
+  created_at    DateTime   @default(now())
+  permission    Permission @relation(fields: [permission_id], references: [id], onDelete: Cascade)
+  role          Role       @relation(fields: [role_id], references: [id], onDelete: Cascade)
+
+  @@unique([role_id, permission_id])
+  @@index([permission_id], map: "role_permissions_permission_id_fkey")
+  @@map("role_permissions")
+}
+
+model UserExtra {
+  id             Int      @id @default(autoincrement())
+  user_id        Int      @unique
+  paid_left      Int      @default(0)
+  paid_right     Int      @default(0)
+  free_left      Int      @default(0)
+  free_right     Int      @default(0)
+  bv_left        Float    @default(0)
+  bv_right       Float    @default(0)
+  total_bv_left  Float    @default(0)
+  total_bv_right Float    @default(0)
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+  user           User     @relation(fields: [user_id], references: [id], onDelete: NoAction)
+
+  @@map("user_extras")
+}
+
+model UserLogin {
+  id           Int      @id @default(autoincrement())
+  user_id      Int
+  user_ip      String?
+  city         String?
+  country      String?
+  country_code String?
+  longitude    String?
+  latitude     String?
+  browser      String?
+  os           String?
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+  device_type  String?
+  isp          String?
+  region       String?
+  user         User     @relation(fields: [user_id], references: [id], onDelete: NoAction)
+
+  @@index([user_id], map: "user_logins_user_id_fkey")
+  @@map("user_logins")
+}
+
+model Plan {
+  id          Int      @id @default(autoincrement())
+  name        String
+  price       Float    @default(0)
+  bv          Float    @default(0)
+  ref_com     Float    @default(0)
+  tree_com    Float    @default(0)
+  status      Int      @default(1)
+  updated_at  DateTime @updatedAt
+  created_at  DateTime @default(now())
+  daily_limit Int      @default(0)
+
+  @@map("plans")
+}
+
+model Platform {
+  id                 Int        @id @default(autoincrement())
+  name               String
+  status             Int        @default(1)
+  created_at         DateTime   @default(now())
+  updated_at         DateTime   @updatedAt
+  image              String?
+  commission         Float      @default(0)
+  start_price        Float      @default(0)
+  end_price          Float      @default(0)
+  allow_orders       Int        @default(1)
+  auto_approval      Int        @default(0)
+  currency           String     @default("USDT")
+  description        String?    @db.Text
+  featured           Int        @default(0)
+  max_orders_per_day Int        @default(40)
+  min_orders         Int        @default(0)
+  show_on_dashboard  Int        @default(1)
+  slug               String?    @unique
+  vip_level          Int        @default(1)
+  orderSets          OrderSet[]
+  orders             Order[]
+  products           Product[]
+
+  @@map("platforms")
+}
+
+model PlatformRules {
+  id          Int      @id @default(autoincrement())
+  slug        String?
+  description String?
+  image       String?
+  status      Int      @default(1)
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+  content     String?  @db.LongText
+  sort_order  Int      @default(0)
+  title       String?
+
+  @@map("platform_rules")
+}
+
+model Product {
+  id           Int           @id @default(autoincrement())
+  platform_id  Int
+  name         String
+  price        Float         @default(0)
+  image        String?
+  created_at   DateTime      @default(now())
+  updated_at   DateTime      @updatedAt
+  quantity     Int           @default(1)
+  status       Int           @default(1)
+  orderDetails OrderDetail[]
+  platform     Platform      @relation(fields: [platform_id], references: [id], onDelete: NoAction)
+
+  @@index([platform_id], map: "products_platform_id_fkey")
+  @@map("products")
+}
+
+model ComboProduct {
+  id         Int      @id @default(autoincrement())
+  name       String
+  status     Int      @default(1)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  price      Float    @default(0)
+
+  @@map("combo_products")
+}
+
+model Order {
+  id             Int             @id @default(autoincrement())
+  product_id     Int?
+  user_id        Int?
+  profit         Float           @default(0)
+  status         Int             @default(1)
+  type           String?
+  end_at         DateTime?
+  created_at     DateTime        @default(now())
+  updated_at     DateTime        @updatedAt
+  platform_id    Int?
+  order_set_id   Int?
+  orderCompletes OrderComplete[]
+  orderDetails   OrderDetail[]
+  orderSet       OrderSet?       @relation(fields: [order_set_id], references: [id])
+  platform       Platform?       @relation(fields: [platform_id], references: [id])
+
+  @@index([order_set_id], map: "orders_order_set_id_fkey")
+  @@index([platform_id], map: "orders_platform_id_fkey")
+  @@map("orders")
+}
+
+model OrderDetail {
+  id         Int      @id @default(autoincrement())
+  order_id   Int
+  product_id Int
+  quantity   Int      @default(1)
+  price      Float    @default(0)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  order      Order    @relation(fields: [order_id], references: [id], onDelete: NoAction)
+  product    Product  @relation(fields: [product_id], references: [id], onDelete: NoAction)
+
+  @@index([order_id], map: "order_details_order_id_fkey")
+  @@index([product_id], map: "order_details_product_id_fkey")
+  @@map("order_details")
+}
+
+model OrderSet {
+  id              Int              @id @default(autoincrement())
+  platform_id     Int?
+  user_rank_id    Int?
+  name            String?
+  created_at      DateTime         @default(now())
+  updated_at      DateTime         @updatedAt
+  status          Int              @default(1)
+  total_profit    Float            @default(0)
+  orderCompletes  OrderComplete[]
+  orderSetAssigns OrderSetAssign[]
+  platform        Platform?        @relation(fields: [platform_id], references: [id])
+  orders          Order[]
+
+  @@index([platform_id], map: "order_sets_platform_id_fkey")
+  @@map("order_sets")
+}
+
+model OrderSetAssign {
+  id                   Int      @id @default(autoincrement())
+  order_set_id         Int
+  percentage_completed Float    @default(0)
+  user_id              Int
+  created_at           DateTime @default(now())
+  updated_at           DateTime @updatedAt
+  orderSet             OrderSet @relation(fields: [order_set_id], references: [id], onDelete: NoAction)
+  user                 User     @relation(fields: [user_id], references: [id], onDelete: NoAction)
+
+  @@index([order_set_id], map: "order_set_assigns_order_set_id_fkey")
+  @@index([user_id], map: "order_set_assigns_user_id_fkey")
+  @@map("order_set_assigns")
+}
+
+model OrderComplete {
+  id           Int       @id @default(autoincrement())
+  order_set_id Int?
+  order_id     Int
+  user_id      Int
+  evaluation   String?
+  profit       Float     @default(0)
+  price        Float     @default(0)
+  status       Int       @default(0)
+  end_at       DateTime?
+  created_at   DateTime  @default(now())
+  updated_at   DateTime  @updatedAt
+  type         String?
+  order_no     String?
+  balance      Float     @default(0)
+  order_count  Int       @default(0)
+  order        Order     @relation(fields: [order_id], references: [id], onDelete: NoAction)
+  orderSet     OrderSet? @relation(fields: [order_set_id], references: [id])
+  user         User      @relation(fields: [user_id], references: [id], onDelete: NoAction)
+
+  @@index([order_id], map: "order_completes_order_id_fkey")
+  @@index([order_set_id], map: "order_completes_order_set_id_fkey")
+  @@index([user_id], map: "order_completes_user_id_fkey")
+  @@map("order_completes")
+}
+
+model Deposit {
+  id              Int      @id @default(autoincrement())
+  user_id         Int
+  method_code     Int?
+  amount          Float    @default(0)
+  method_currency String?
+  charge          Float    @default(0)
+  rate            Float    @default(0)
+  final_amo       Float    @default(0)
+  detail          String?  @db.LongText
+  btc_amo         String?
+  btc_wallet      String?
+  trx             String?
+  status          Int      @default(0)
+  admin_feedback  String?  @db.Text
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+  from_admin      Int      @default(0)
+  gateway_id      Int?
+  user            User     @relation(fields: [user_id], references: [id], onDelete: NoAction)
+
+  @@index([gateway_id])
+  @@index([user_id], map: "deposits_user_id_fkey")
+  @@map("deposits")
+}
+
+model Withdrawal {
+  id                   Int      @id @default(autoincrement())
+  method_id            Int?
+  user_id              Int
+  amount               Float    @default(0)
+  currency             String?
+  rate                 Float    @default(0)
+  charge               Float    @default(0)
+  trx                  String?
+  final_amount         Float    @default(0)
+  after_charge         Float    @default(0)
+  withdraw_information String?  @db.LongText
+  status               Int      @default(0)
+  admin_feedback       String?  @db.Text
+  created_at           DateTime @default(now())
+  updated_at           DateTime @updatedAt
+  user                 User     @relation(fields: [user_id], references: [id], onDelete: NoAction)
+
+  @@index([user_id], map: "withdrawals_user_id_fkey")
+  @@map("withdrawals")
+}
+
+model WithdrawMethod {
+  id             Int      @id @default(autoincrement())
+  name           String
+  min_limit      Float    @default(0)
+  max_limit      Float    @default(0)
+  fixed_charge   Float    @default(0)
+  rate           Float    @default(0)
+  percent_charge Float    @default(0)
+  currency       String?
+  description    String?  @db.Text
+  status         Int      @default(1)
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+  user_data      String?  @db.LongText
+
+  @@map("withdraw_methods")
+}
+
+model Transaction {
+  id           Int      @id @default(autoincrement())
+  user_id      Int
+  amount       Float    @default(0)
+  charge       Float    @default(0)
+  post_balance Float    @default(0)
+  trx_type     String?
+  trx          String?
+  details      String?
+  remark       String?
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+  user         User     @relation(fields: [user_id], references: [id], onDelete: NoAction)
+
+  @@index([user_id], map: "transactions_user_id_fkey")
+  @@map("transactions")
+}
+
+model CommissionTransaction {
+  id         Int      @id @default(autoincrement())
+  sponsor_id Int?
+  amount     Float    @default(0)
+  type       String?
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  details    String?
+  user_id    Int?
+  user       User?    @relation(fields: [sponsor_id], references: [id])
+
+  @@index([sponsor_id], map: "commission_transactions_sponsor_id_fkey")
+  @@map("commission_transactions")
+}
+
+model DepositCommissionLevel {
+  id                  Int      @id @default(autoincrement())
+  number              Int      @default(0)
+  personal_investment Float    @default(0)
+  team_deposit        Float    @default(0)
+  group_deposit       Float    @default(0)
+  created_at          DateTime @default(now())
+  updated_at          DateTime @updatedAt
+  commission_percent  Float    @default(0)
+
+  @@map("deposit_commission_levels")
+}
+
+model WithdrawCommissionLevel {
+  id                  Int      @id @default(autoincrement())
+  number              Int      @default(0)
+  personal_investment Float    @default(0)
+  team_deposit        Float    @default(0)
+  group_deposit       Float    @default(0)
+  created_at          DateTime @default(now())
+  updated_at          DateTime @updatedAt
+  commission_percent  Float    @default(0)
+
+  @@map("withdraw_commission_levels")
+}
+
+model BvLog {
+  id         Int      @id @default(autoincrement())
+  user_id    Int
+  position   Int?
+  amount     Float    @default(0)
+  trx_type   String?
+  details    String?
+  updated_at DateTime @updatedAt
+  created_at DateTime @default(now())
+
+  @@map("bv_logs")
+}
+
+model GeneralSetting {
+  id                            Int       @id @default(autoincrement())
+  site_name                     String?
+  cur_text                      String?
+  cur_sym                       String?
+  email_from                    String?
+  email_template                String?   @db.Text
+  sms_body                      String?   @db.Text
+  sms_from                      String?
+  mail_config                   String?   @db.LongText
+  sms_config                    String?   @db.LongText
+  global_shortcodes             String?   @db.LongText
+  kv                            Int?      @default(0)
+  ev                            Int?      @default(0)
+  en                            Int?      @default(0)
+  sv                            Int?      @default(0)
+  sn                            Int?      @default(0)
+  force_ssl                     Int?      @default(0)
+  maintenance_mode              Int?      @default(0)
+  secure_password               Int?      @default(0)
+  agree                         Int?      @default(0)
+  registration                  Int?      @default(0)
+  active_template               String?
+  system_info                   String?   @db.LongText
+  max_bv                        Float?    @default(0)
+  cary_flash                    Int?      @default(0)
+  matching_bonus_time           String?
+  matching_when                 String?
+  last_paid                     DateTime?
+  last_cron                     DateTime?
+  balance_transfer              Int?      @default(0)
+  user_ranking                  Int?      @default(0)
+  created_at                    DateTime  @default(now())
+  updated_at                    DateTime  @updatedAt
+  balance_transfer_fixed_charge Float?    @default(0)
+  balance_transfer_max          Float?    @default(0)
+  balance_transfer_min          Float?    @default(0)
+  balance_transfer_per_charge   Float?    @default(0)
+  customer_service_link         String?
+  customer_service_link2        String?
+  matching_bonus                Float?    @default(0)
+
+  @@map("general_settings")
+}
+
+model SiteSetting {
+  id         Int      @id @default(autoincrement())
+  key        String   @unique
+  value      String?  @db.LongText
+  group      String   @default("general")
+  type       String   @default("text")
+  label      String?
+  hint       String?
+  sort_order Int      @default(0)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@index([group])
+  @@map("site_settings")
+}
+
+model SettingAuditLog {
+  id         Int      @id @default(autoincrement())
+  admin_id   Int?
+  key        String
+  old_value  String?  @db.Text
+  new_value  String?  @db.Text
+  created_at DateTime @default(now())
+
+  @@index([key])
+  @@map("setting_audit_logs")
+}
+
+model Gateway {
+  id                   Int               @id @default(autoincrement())
+  code                 Int?              @unique
+  name                 String
+  country              String?
+  alias                String?
+  status               Int               @default(1)
+  gateway_parameters   String?           @db.LongText
+  supported_currencies String?           @db.LongText
+  crypto               Int               @default(0)
+  extra                String?           @db.LongText
+  description          String?           @db.Text
+  created_at           DateTime          @default(now())
+  updated_at           DateTime          @updatedAt
+  category             String?
+  currency             String?           @default("USD")
+  exchange_rate        Float             @default(1)
+  fixed_charge         Float             @default(0)
+  instructions         String?           @db.LongText
+  logo                 String?
+  max_amount           Float             @default(100000)
+  min_amount           Float             @default(10)
+  percent_charge       Float             @default(0)
+  proof_max_size       Int               @default(5)
+  proof_types          String?           @default("jpg,png,webp")
+  qr_code              String?
+  show_charge          Int               @default(0)
+  show_copy_btn        Int               @default(1)
+  show_instructions    Int               @default(1)
+  show_proof           Int               @default(1)
+  show_qr              Int               @default(1)
+  show_wallet          Int               @default(1)
+  sort_order           Int               @default(0)
+  wallet_address       String?
+  currencies           GatewayCurrency[]
+  fields               GatewayField[]
+
+  @@map("gateways")
+}
+
+model GatewayField {
+  id            Int      @id @default(autoincrement())
+  gateway_id    Int
+  label         String
+  field_name    String
+  placeholder   String?
+  type          String   @default("text")
+  options       String?  @db.LongText
+  required      Int      @default(1)
+  validation    String?
+  default_value String?
+  sort_order    Int      @default(0)
+  status        Int      @default(1)
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+  gateway       Gateway  @relation(fields: [gateway_id], references: [id], onDelete: Cascade)
+
+  @@index([gateway_id], map: "gateway_fields_gateway_id_fkey")
+  @@map("gateway_fields")
+}
+
+model GatewayCurrency {
+  id                Int      @id @default(autoincrement())
+  name              String?
+  currency          String?
+  symbol            String?
+  method_code       Int?
+  gateway_alias     String?
+  min_amount        Float    @default(0)
+  max_amount        Float    @default(0)
+  percent_charge    Float    @default(0)
+  fixed_charge      Float    @default(0)
+  rate              Float    @default(0)
+  image             String?
+  gateway_parameter String?  @db.LongText
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
+  gateway           Gateway? @relation(fields: [method_code], references: [code])
+
+  @@index([method_code], map: "gateway_currencies_method_code_fkey")
+  @@map("gateway_currencies")
+}
+
+model SupportTicket {
+  id         Int              @id @default(autoincrement())
+  user_id    Int?
+  name       String?
+  email      String?
+  ticket     String?
+  subject    String?
+  status     Int              @default(0)
+  priority   Int              @default(0)
+  last_reply DateTime?
+  created_at DateTime         @default(now())
+  updated_at DateTime         @updatedAt
+  messages   SupportMessage[]
+  user       User?            @relation(fields: [user_id], references: [id])
+
+  @@index([user_id], map: "support_tickets_user_id_fkey")
+  @@map("support_tickets")
+}
+
+model SupportMessage {
+  id                Int           @id @default(autoincrement())
+  support_ticket_id Int
+  admin_id          Int?          @default(0)
+  message           String?       @db.LongText
+  created_at        DateTime      @default(now())
+  updated_at        DateTime      @updatedAt
+  ticket            SupportTicket @relation(fields: [support_ticket_id], references: [id], onDelete: NoAction)
+
+  @@index([support_ticket_id], map: "support_messages_support_ticket_id_fkey")
+  @@map("support_messages")
+}
+
+model UserRankSetting {
+  id          Int      @id @default(autoincrement())
+  min_deposit Float    @default(0)
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+  commission  Float    @default(0)
+  daily_order Int      @default(0)
+  max_deposit Float    @default(0)
+  name        String?
+  slug        String?  @unique
+  sort_order  Int      @default(0)
+  status      Int      @default(1)
+
+  @@map("user_rank_settings")
+}
+
+model UserRanking {
+  id           Int      @id @default(autoincrement())
+  name         String?
+  bonus        Float    @default(0)
+  status       Int      @default(1)
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+  image        String?
+  minimum      Float    @default(0)
+  team_minimum Float    @default(0)
+
+  @@map("user_rankings")
+}
+
+model NotificationTemplate {
+  id           Int      @id @default(autoincrement())
+  act          String?
+  name         String?
+  email_body   String?  @db.Text
+  sms_body     String?  @db.Text
+  shortcodes   String?  @db.LongText
+  email_status Int      @default(1)
+  sms_status   Int      @default(1)
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+  subject      String?
+
+  @@map("notification_templates")
+}
+
+model NotificationLog {
+  id         Int       @id @default(autoincrement())
+  user_id    Int?
+  message    String?   @db.Text
+  created_at DateTime  @default(now())
+  is_read    Int       @default(0)
+  read_at    DateTime?
+  title      String?
+  type       String?
+
+  @@index([user_id])
+  @@index([created_at])
+  @@map("notification_logs")
+}
+
+model Frontend {
+  id          Int      @id @default(autoincrement())
+  data_keys   String?
+  data_values String?  @db.LongText
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+  tempname    String?
+
+  @@map("frontends")
+}
+
+model Language {
+  id         Int      @id @default(autoincrement())
+  name       String
+  code       String
+  is_default Int      @default(0)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  image      String?
+
+  @@map("languages")
+}
+
+model Page {
+  id         Int      @id @default(autoincrement())
+  name       String?
+  slug       String?
+  tempname   String?
+  secs       String?  @db.LongText
+  is_default Int      @default(0)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@map("pages")
+}
+
+model AnalyticsEvent {
+  id           Int      @id @default(autoincrement())
+  session_id   String
+  user_id      Int?
+  page_path    String
+  referrer     String?
+  source       String?
+  browser      String?
+  os           String?
+  device_type  String?
+  country      String?
+  country_code String?
+  city         String?
+  ip           String?
+  user_agent   String?  @db.Text
+  duration     Int      @default(0)
+  is_bounce    Int      @default(0)
+  created_at   DateTime @default(now())
+
+  @@index([session_id])
+  @@index([user_id])
+  @@index([created_at])
+  @@index([page_path])
+  @@map("analytics_events")
+}
+
+model AnalyticsDaily {
+  id              Int      @id @default(autoincrement())
+  date            DateTime @unique @db.Date
+  total_visits    Int      @default(0)
+  unique_visitors Int      @default(0)
+  new_users       Int      @default(0)
+  returning_users Int      @default(0)
+  page_views      Int      @default(0)
+  avg_duration    Float    @default(0)
+  bounce_rate     Float    @default(0)
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+
+  @@map("analytics_daily")
+}
+
+model AnalyticsSession {
+  id           Int       @id @default(autoincrement())
+  session_id   String    @unique
+  user_id      Int?
+  started_at   DateTime  @default(now())
+  ended_at     DateTime?
+  duration     Int       @default(0)
+  page_count   Int       @default(0)
+  is_bounce    Int       @default(0)
+  entry_page   String?
+  exit_page    String?
+  browser      String?
+  os           String?
+  device_type  String?
+  country      String?
+  country_code String?
+  source       String?
+  ip           String?
+  created_at   DateTime  @default(now())
+
+  @@index([user_id])
+  @@index([created_at])
+  @@map("analytics_sessions")
+}
