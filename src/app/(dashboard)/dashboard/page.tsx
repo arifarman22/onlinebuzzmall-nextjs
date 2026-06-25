@@ -96,6 +96,9 @@ export default async function DashboardPage() {
         </div>
       </div>
 
+      {/* Platform Rules */}
+      <PlatformRulesCards />
+
       {/* Account Overview */}
       <div className="bg-slate-900 rounded-xl border border-slate-800 p-5">
         <div className="flex items-center gap-2 mb-4">
@@ -122,9 +125,6 @@ export default async function DashboardPage() {
           </div>
         </div>
       </div>
-
-      {/* Platform Rules */}
-      <PlatformRulesCards />
 
       {/* Recent Transactions */}
       <div className="bg-slate-900 rounded-xl border border-slate-800">

@@ -5,6 +5,7 @@ import ImpersonationBanner from '@/components/ImpersonationBanner';
 import NotificationBell from '@/components/dashboard/NotificationBell';
 import MobileSidebar from '@/components/layout/MobileSidebar';
 import BottomNav from '@/components/layout/BottomNav';
+import BackButton from '@/components/dashboard/BackButton';
 import { getBranding } from '@/lib/branding';
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -34,6 +35,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
           <NotificationBell />
         </div>
         <main className="px-4 pb-4 pt-4 max-w-4xl mx-auto">
+          <BackButton />
           {children}
         </main>
         <BottomNav />
