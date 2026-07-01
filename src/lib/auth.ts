@@ -139,16 +139,20 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         (session.user as any).roleSlug = token.roleSlug;
         if (token.impersonatedBy) (session.user as any).impersonatedBy = token.impersonatedBy;
 
-        // Check if user is still active (ban/delete check)
+        // Check if user is still active (ban/delete check) — cached 30s
         if (token.role === 'user' && token.userId) {
           try {
-            const user = await db.user.findUnique({ where: { id: Number(token.userId) }, select: { status: true } });
-            if (user && user.status === 0) {
-              (session.user as any).banned = true;
+            // Only re-check every 60 seconds using token timestamp
+            const lastCheck = (token as any).statusCheckedAt as number | undefined;
+            const now = Date.now();
+            if (!lastCheck || now - lastCheck > 60_000) {
+              const user = await db.user.findUnique({ where: { id: Number(token.userId) }, select: { status: true } });
+              (token as any).statusCheckedAt = now;
+              (token as any).cachedStatus = user?.status;
             }
-            if (user && user.status === -1) {
-              (session.user as any).deleted = true;
-            }
+            const status = (token as any).cachedStatus;
+            if (status === 0) (session.user as any).banned = true;
+            if (status === -1) (session.user as any).deleted = true;
           } catch {}
         }
       }

@@ -16,9 +16,10 @@ export default async function DashboardPage() {
   const user = await db.user.findUnique({ where: { id: userId }, include: { userExtra: true } });
   if (!user) return <div className="text-center py-20 text-slate-500">Please log in to view your dashboard.</div>;
 
-  const userRank = user.rank_id > 0 ? await db.userRankSetting.findFirst({ where: { id: user.rank_id } }) : null;
-
-  const recentTx = await db.transaction.findMany({ where: { user_id: userId }, orderBy: { created_at: 'desc' }, take: 5 });
+  const [userRank, recentTx] = await Promise.all([
+    user.rank_id > 0 ? db.userRankSetting.findFirst({ where: { id: user.rank_id } }) : Promise.resolve(null),
+    db.transaction.findMany({ where: { user_id: userId }, orderBy: { created_at: 'desc' }, take: 5 }),
+  ]);
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto">

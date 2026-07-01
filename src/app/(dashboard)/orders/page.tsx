@@ -11,31 +11,30 @@ export default async function OrdersPage() {
   const user = await db.user.findUnique({ where: { id: userId } });
   if (!user) redirect('/login');
 
-  const platforms = await db.platform.findMany({
-    where: { status: 1, show_on_dashboard: 1 },
-    orderBy: [{ vip_level: 'asc' }, { name: 'asc' }],
-  });
-
-  const assignments = await db.orderSetAssign.findMany({
-    where: { user_id: userId },
-    include: {
-      orderSet: { include: { platform: true, _count: { select: { orders: true } } } },
-    },
-  });
-
-  const completedCount = await db.orderComplete.count({ where: { user_id: userId, status: 1 } });
-  const totalProfit = await db.orderComplete.aggregate({ where: { user_id: userId, status: 1 }, _sum: { profit: true } });
-  const pendingCount = await db.orderComplete.count({ where: { user_id: userId, status: 0 } });
-
-  const orderHistory = await db.orderComplete.findMany({
-    where: { user_id: userId },
-    include: {
-      order: { include: { orderDetails: { include: { product: true } }, platform: true } },
-      orderSet: { include: { platform: true } },
-    },
-    orderBy: { created_at: 'desc' },
-    take: 50,
-  });
+  const [platforms, assignments, completedCount, totalProfit, pendingCount, orderHistory] = await Promise.all([
+    db.platform.findMany({
+      where: { status: 1, show_on_dashboard: 1 },
+      orderBy: [{ vip_level: 'asc' }, { name: 'asc' }],
+    }),
+    db.orderSetAssign.findMany({
+      where: { user_id: userId },
+      include: {
+        orderSet: { include: { platform: true, _count: { select: { orders: true } } } },
+      },
+    }),
+    db.orderComplete.count({ where: { user_id: userId, status: 1 } }),
+    db.orderComplete.aggregate({ where: { user_id: userId, status: 1 }, _sum: { profit: true } }),
+    db.orderComplete.count({ where: { user_id: userId, status: 0 } }),
+    db.orderComplete.findMany({
+      where: { user_id: userId },
+      include: {
+        order: { include: { orderDetails: { include: { product: true } }, platform: true } },
+        orderSet: { include: { platform: true } },
+      },
+      orderBy: { created_at: 'desc' },
+      take: 50,
+    }),
+  ]);
 
   return (
     <OrdersClient

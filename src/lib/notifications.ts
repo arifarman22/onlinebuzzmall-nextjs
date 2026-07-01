@@ -8,8 +8,14 @@ interface NotifyParams {
   title?: string;
 }
 
-export async function sendNotification({ userId, templateName, variables = {}, title }: NotifyParams) {
-  try {
+export function sendNotification({ userId, templateName, variables = {}, title }: NotifyParams) {
+  // Fire and forget — never block the API response
+  _sendNotificationAsync({ userId, templateName, variables, title }).catch(err =>
+    console.error('sendNotification error:', err)
+  );
+}
+
+async function _sendNotificationAsync({ userId, templateName, variables = {}, title }: NotifyParams) {
     const template = await db.notificationTemplate.findFirst({ where: { name: templateName } });
     if (!template) return;
 
@@ -64,9 +70,6 @@ export async function sendNotification({ userId, templateName, variables = {}, t
       `;
       await sendEmail(user.email, subject, body).catch(err => console.error('Notification email failed:', err));
     }
-  } catch (err) {
-    console.error('sendNotification error:', err);
-  }
 }
 
 export async function sendAdminNotification({ title, message, type = 'system' }: { title: string; message: string; type?: string }) {

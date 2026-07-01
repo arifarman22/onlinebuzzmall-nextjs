@@ -2,16 +2,13 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
 
-  // Disable x-powered-by header
   poweredByHeader: false,
-
-  // Strict mode for React
   reactStrictMode: true,
-
-  // Production optimizations
   compress: true,
 
-  // Security headers
+  // Keep DB connections alive between requests
+  serverExternalPackages: ['@prisma/client'],
+
   async headers() {
     return [
       {
@@ -29,7 +26,7 @@ const nextConfig: NextConfig = {
           { key: 'Cross-Origin-Opener-Policy', value: 'same-origin' },
         ],
       },
-      // Cache control for static assets
+      // Long-term cache for static assets
       {
         source: '/uploads/(.*)',
         headers: [
@@ -52,21 +49,22 @@ const nextConfig: NextConfig = {
         headers: [
           { key: 'Cache-Control', value: 'no-store, no-cache, must-revalidate' },
           { key: 'Pragma', value: 'no-cache' },
+          { key: 'Connection', value: 'keep-alive' },
         ],
       },
     ];
   },
 
-  // Image optimization security
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: '**' },
     ],
     dangerouslyAllowSVG: false,
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
+    minimumCacheTTL: 3600,
+    formats: ['image/avif', 'image/webp'],
   },
 
-  // Redirect HTTP to HTTPS in production
   async redirects() {
     if (process.env.NODE_ENV === 'production') {
       return [
