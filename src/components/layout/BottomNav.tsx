@@ -16,8 +16,8 @@ export default function BottomNav() {
   const pathname = usePathname();
 
   return (
-    <div className="lg:hidden" style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 50, background: '#0f172a', borderTop: '1px solid #1e293b' }}>
-      <div style={{ display: 'flex', height: '56px', width: '100%', alignItems: 'center' }}>
+    <div className="lg:hidden" style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 50, background: '#0f172a', borderTop: '1px solid #1e293b', paddingBottom: 'env(safe-area-inset-bottom)' }}>
+      <div style={{ display: 'flex', height: '64px', width: '100%', alignItems: 'center' }}>
         {navItems.map((item) => {
           const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
 
@@ -29,14 +29,13 @@ export default function BottomNav() {
                 style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '2px', textDecoration: 'none' }}
               >
                 <div style={{
-                  width: '44px', height: '44px', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  width: '48px', height: '48px', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center',
                   background: isActive ? '#059669' : '#1e293b',
-                  border: isActive ? '2px solid #34d399' : '2px solid #334155',
-                  marginBottom: '2px',
+                  border: `2px solid ${isActive ? '#34d399' : '#334155'}`,
                 }}>
-                  <item.icon size={20} strokeWidth={2.5} color={isActive ? '#fff' : '#64748b'} />
+                  <item.icon size={22} strokeWidth={2.5} color={isActive ? '#fff' : '#64748b'} />
                 </div>
-                <span style={{ fontSize: '9px', fontWeight: 600, color: isActive ? '#34d399' : '#64748b' }}>
+                <span style={{ fontSize: '9px', fontWeight: 600, color: isActive ? '#34d399' : '#64748b', marginTop: '2px' }}>
                   {item.label}
                 </span>
               </Link>
