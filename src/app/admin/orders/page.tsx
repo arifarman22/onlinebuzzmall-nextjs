@@ -18,10 +18,19 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
   const where: any = {};
   if (status !== undefined && status !== '') where.status = Number(status);
   if (search) {
-    where.OR = [
-      { order_no: { contains: search } },
-      { user: { username: { contains: search } } },
-    ];
+    const searchId = Number(search);
+    if (searchId > 0) {
+      where.OR = [
+        { user_id: searchId },
+        { order_no: { contains: search } },
+        { user: { username: { contains: search } } },
+      ];
+    } else {
+      where.OR = [
+        { order_no: { contains: search } },
+        { user: { username: { contains: search } } },
+      ];
+    }
   }
 
   const [orders, total] = await Promise.all([

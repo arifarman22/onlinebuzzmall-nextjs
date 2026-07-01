@@ -33,10 +33,19 @@ export default async function AdminWithdrawalsPage({ searchParams }: { searchPar
 
   if (statusFilter) where.status = Number(statusFilter);
   if (search) {
-    where.OR = [
-      { trx: { contains: search } },
-      { user: { username: { contains: search } } },
-    ];
+    const searchId = Number(search);
+    if (searchId > 0) {
+      where.OR = [
+        { user_id: searchId },
+        { trx: { contains: search } },
+        { user: { username: { contains: search } } },
+      ];
+    } else {
+      where.OR = [
+        { trx: { contains: search } },
+        { user: { username: { contains: search } } },
+      ];
+    }
   }
 
   const [withdrawals, total] = await Promise.all([

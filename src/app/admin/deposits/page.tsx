@@ -28,10 +28,19 @@ export default async function AdminDepositsPage({ searchParams }: { searchParams
 
   if (statusFilter) where.status = Number(statusFilter);
   if (search) {
-    where.OR = [
-      { trx: { contains: search } },
-      { user: { username: { contains: search } } },
-    ];
+    const searchId = Number(search);
+    if (searchId > 0) {
+      where.OR = [
+        { user_id: searchId },
+        { trx: { contains: search } },
+        { user: { username: { contains: search } } },
+      ];
+    } else {
+      where.OR = [
+        { trx: { contains: search } },
+        { user: { username: { contains: search } } },
+      ];
+    }
   }
 
   const [deposits, total] = await Promise.all([
