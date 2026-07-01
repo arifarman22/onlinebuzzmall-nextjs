@@ -12,7 +12,7 @@ cloudinary.config({
 
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif', 'image/webp', 'application/pdf'];
 const MAX_SIZE = 5 * 1024 * 1024;
-const ALLOWED_UPLOAD_TYPES = ['profile', 'kyc', 'gateway', 'deposit', 'platform-rules'];
+const ALLOWED_UPLOAD_TYPES = ['profile', 'kyc', 'gateway', 'deposit', 'platform-rules', 'product'];
 
 // Magic bytes for file type verification
 const MAGIC_BYTES: Record<string, number[][]> = {

@@ -13,8 +13,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: false, message: parsed.error.issues[0].message }, { status: 400 });
   }
 
-  const { name, platform_id, price, quantity, status } = parsed.data;
-  await db.product.create({ data: { name, platform_id, price: price || 0, quantity: quantity || 1, status: status ?? 1 } });
+  const { name, platform_id, price, quantity, status, image } = parsed.data;
+  await db.product.create({ data: { name, platform_id, price: price || 0, quantity: quantity || 1, status: status ?? 1, image: image || null } });
   return NextResponse.json({ success: true, message: 'Product created successfully' });
 }
 
@@ -28,10 +28,10 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ success: false, message: parsed.error.issues[0].message }, { status: 400 });
   }
 
-  const { id, name, platform_id, price, quantity, status } = parsed.data;
+  const { id, name, platform_id, price, quantity, status, image } = parsed.data;
   if (!id) return NextResponse.json({ success: false, message: 'Product ID required' }, { status: 400 });
 
-  await db.product.update({ where: { id }, data: { name, platform_id, price, quantity, status } });
+  await db.product.update({ where: { id }, data: { name, platform_id, price, quantity, status, ...(image !== undefined && { image: image || null }) } });
   return NextResponse.json({ success: true, message: 'Product updated successfully' });
 }
 

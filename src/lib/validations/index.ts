@@ -127,6 +127,7 @@ export const adminProductSchema = z.object({
   price: z.number().min(0).optional(),
   quantity: z.number().int().min(0).optional(),
   status: z.number().int().min(0).max(1).optional(),
+  image: z.string().url().optional().or(z.literal('')),
 });
 
 export const adminSupportSchema = z.object({
