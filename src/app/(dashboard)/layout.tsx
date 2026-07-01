@@ -29,12 +29,12 @@ export default async function DashboardLayout({ children }: { children: React.Re
   return (
     <DashboardClient>
       <ImpersonationBanner />
-      <div className="min-h-screen bg-slate-950 pb-16 lg:pb-0">
+      <div className="min-h-screen bg-slate-950 pb-20 lg:pb-0">
         <div className="sticky top-0 z-30 bg-slate-950/80 backdrop-blur-xl border-b border-slate-800/50 flex items-center justify-between px-4 py-3">
           <MobileSidebar logo={logo} siteName={siteName} />
           <NotificationBell />
         </div>
-        <main className="px-4 pb-4 pt-4 max-w-4xl mx-auto">
+        <main className="px-4 pb-8 pt-4 max-w-4xl mx-auto">
           <BackButton />
           {children}
         </main>
