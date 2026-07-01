@@ -54,8 +54,12 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
           </Link>
           <div>
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-xl bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-lg">
-                {(user.firstname?.[0] || user.username[0]).toUpperCase()}
+              <div className="w-12 h-12 rounded-xl bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-lg overflow-hidden flex-shrink-0">
+                {user.image ? (
+                  <img src={user.image.startsWith('http') ? user.image : `/${user.image}`} alt={user.username} className="w-full h-full object-cover" />
+                ) : (
+                  (user.firstname?.[0] || user.username[0]).toUpperCase()
+                )}
               </div>
               <div>
                 <h2 className="text-xl font-bold text-gray-900">{user.firstname} {user.lastname}</h2>
