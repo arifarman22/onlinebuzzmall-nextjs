@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { DollarSign, MinusCircle, History, LogIn, GitBranch, Ban, Key, CheckCircle, Trash2 } from 'lucide-react';
+import { DollarSign, MinusCircle, History, LogIn, Ban, Key, CheckCircle, Trash2 } from 'lucide-react';
 
 interface Props {
   userId: number;
@@ -81,9 +81,6 @@ export default function UserQuickActions({ userId, username, status }: Props) {
       </button>
       <button onClick={handleImpersonate} disabled={loading === 'impersonate'} className="flex items-center gap-1.5 px-3 py-2 bg-indigo-50 text-indigo-700 text-xs font-medium rounded-lg hover:bg-indigo-100 transition-colors disabled:opacity-50">
         <LogIn size={14} /> {loading === 'impersonate' ? 'Loading...' : 'Login as User'}
-      </button>
-      <button onClick={() => router.push(`/admin/users/${userId}`)} className="flex items-center gap-1.5 px-3 py-2 bg-purple-50 text-purple-700 text-xs font-medium rounded-lg hover:bg-purple-100 transition-colors">
-        <GitBranch size={14} /> User Tree
       </button>
       <button onClick={handleBan} disabled={loading === 'ban'} className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-lg transition-colors disabled:opacity-50 ${status === 1 ? 'bg-red-50 text-red-700 hover:bg-red-100' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'}`}>
         {status === 1 ? <><Ban size={14} /> Ban User</> : <><CheckCircle size={14} /> Unban User</>}

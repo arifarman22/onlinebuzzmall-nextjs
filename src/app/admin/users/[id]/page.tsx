@@ -9,8 +9,8 @@ import UserRankAndAssignment from '@/components/admin/UserRankAndAssignment';
 import Link from 'next/link';
 import {
   User, Mail, Phone, Calendar, DollarSign, ShoppingBag,
-  Users, Shield, GitBranch, TrendingUp, Clock, Hash,
-  CheckCircle, XCircle, AlertCircle, ArrowLeft,
+  Shield, GitBranch, TrendingUp, Clock, Hash,
+  CheckCircle, XCircle, ArrowLeft,
 } from 'lucide-react';
 
 export default async function AdminUserDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -74,34 +74,77 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
         </Badge>
       </div>
 
+      {/* Stat Cards — top of page, colored, with view-all links */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+        <Link href={`/admin/deposits?search=${user.id}`} className="group rounded-xl p-4 bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-sm hover:shadow-md transition-shadow">
+          <div className="flex items-center justify-between mb-3">
+            <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center">
+              <DollarSign size={15} className="text-white" />
+            </div>
+            <span className="text-[10px] text-emerald-100 group-hover:text-white">View all →</span>
+          </div>
+          <p className="text-lg font-bold">{formatAmount(user.balance)}</p>
+          <p className="text-xs text-emerald-100 mt-0.5">Balance</p>
+        </Link>
+
+        <Link href={`/admin/deposits?search=${user.id}`} className="group rounded-xl p-4 bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-sm hover:shadow-md transition-shadow">
+          <div className="flex items-center justify-between mb-3">
+            <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center">
+              <TrendingUp size={15} className="text-white" />
+            </div>
+            <span className="text-[10px] text-blue-100 group-hover:text-white">View all →</span>
+          </div>
+          <p className="text-lg font-bold">{formatAmount(totalDeposited)}</p>
+          <p className="text-xs text-blue-100 mt-0.5">Total Deposited</p>
+        </Link>
+
+        <Link href={`/admin/withdrawals?search=${user.id}`} className="group rounded-xl p-4 bg-gradient-to-br from-orange-500 to-orange-600 text-white shadow-sm hover:shadow-md transition-shadow">
+          <div className="flex items-center justify-between mb-3">
+            <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center">
+              <TrendingUp size={15} className="text-white" />
+            </div>
+            <span className="text-[10px] text-orange-100 group-hover:text-white">View all →</span>
+          </div>
+          <p className="text-lg font-bold">{formatAmount(totalWithdrawn)}</p>
+          <p className="text-xs text-orange-100 mt-0.5">Total Withdrawn</p>
+        </Link>
+
+        <Link href={`/admin/orders?search=${user.id}`} className="group rounded-xl p-4 bg-gradient-to-br from-indigo-500 to-indigo-600 text-white shadow-sm hover:shadow-md transition-shadow">
+          <div className="flex items-center justify-between mb-3">
+            <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center">
+              <ShoppingBag size={15} className="text-white" />
+            </div>
+            <span className="text-[10px] text-indigo-100 group-hover:text-white">View all →</span>
+          </div>
+          <p className="text-lg font-bold">{completedOrders}</p>
+          <p className="text-xs text-indigo-100 mt-0.5">Orders Done</p>
+        </Link>
+
+        <div className="rounded-xl p-4 bg-gradient-to-br from-red-500 to-red-600 text-white shadow-sm">
+          <div className="flex items-center justify-between mb-3">
+            <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center">
+              <Shield size={15} className="text-white" />
+            </div>
+          </div>
+          <p className="text-lg font-bold">{formatAmount(user.freeze_amount)}</p>
+          <p className="text-xs text-red-100 mt-0.5">Frozen</p>
+        </div>
+
+        <div className="rounded-xl p-4 bg-gradient-to-br from-gray-600 to-gray-700 text-white shadow-sm">
+          <div className="flex items-center justify-between mb-3">
+            <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center">
+              <Clock size={15} className="text-white" />
+            </div>
+          </div>
+          <p className="text-lg font-bold">{user.daily_order_limit}</p>
+          <p className="text-xs text-gray-300 mt-0.5">Daily Limit</p>
+        </div>
+      </div>
+
       {/* Quick Actions */}
       <div className="bg-white rounded-xl border border-gray-200 p-4">
         <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Quick Actions</p>
         <UserQuickActions userId={user.id} username={user.username} status={user.status} />
-      </div>
-
-      {/* Stat Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        {[
-          { label: 'Balance', value: formatAmount(user.balance), icon: DollarSign, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-          { label: 'Total Deposited', value: formatAmount(totalDeposited), icon: TrendingUp, color: 'text-blue-600', bg: 'bg-blue-50' },
-          { label: 'Total Withdrawn', value: formatAmount(totalWithdrawn), icon: TrendingUp, color: 'text-orange-600', bg: 'bg-orange-50' },
-          { label: 'Orders Done', value: completedOrders, icon: ShoppingBag, color: 'text-indigo-600', bg: 'bg-indigo-50' },
-          { label: 'Referral Comm.', value: formatAmount(user.total_ref_com), icon: Users, color: 'text-purple-600', bg: 'bg-purple-50' },
-          { label: 'Frozen', value: formatAmount(user.freeze_amount), icon: Shield, color: 'text-red-600', bg: 'bg-red-50' },
-          { label: 'Direct Referrals', value: referrals.length, icon: GitBranch, color: 'text-teal-600', bg: 'bg-teal-50' },
-          { label: 'Daily Limit', value: user.daily_order_limit, icon: Clock, color: 'text-gray-600', bg: 'bg-gray-100' },
-        ].map((s) => (
-          <div key={s.label} className="bg-white rounded-xl border border-gray-200 p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <div className={`w-7 h-7 rounded-lg ${s.bg} flex items-center justify-center`}>
-                <s.icon size={14} className={s.color} />
-              </div>
-              <p className="text-xs text-gray-500">{s.label}</p>
-            </div>
-            <p className={`text-base font-bold ${s.color}`}>{s.value}</p>
-          </div>
-        ))}
       </div>
 
       {/* Verification Status */}
