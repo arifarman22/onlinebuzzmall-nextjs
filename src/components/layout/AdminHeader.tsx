@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { signOut } from 'next-auth/react';
 import Link from 'next/link';
-import { User, LogOut, Settings, Shield, ChevronDown, Menu } from 'lucide-react';
+import { User, LogOut, Settings, Shield, ChevronDown, Menu, UserCircle } from 'lucide-react';
 import AdminNotificationBell from '@/components/admin/AdminNotificationBell';
 
 interface AdminHeaderProps {
@@ -69,6 +69,9 @@ export default function AdminHeader({ user, onMenuToggle }: AdminHeaderProps) {
                 <p className="text-xs text-gray-500 truncate">{user.email}</p>
               </div>
               <div className="py-1">
+                <Link href="/admin/profile" onClick={() => setOpen(false)} className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                  <UserCircle size={15} className="text-gray-400" /> My Profile
+                </Link>
                 <Link href="/admin/settings" onClick={() => setOpen(false)} className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
                   <Settings size={15} className="text-gray-400" /> Site Settings
                 </Link>
