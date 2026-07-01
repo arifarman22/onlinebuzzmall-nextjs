@@ -39,7 +39,10 @@ export async function hasPermission(adminId: number, permission: string): Promis
     },
   });
 
-  if (!admin?.role) return false;
+  if (!admin) return false;
+
+  // No role assigned — treat as super-admin (first admin account)
+  if (!admin.role) return true;
 
   // Super admin (role slug = 'super-admin') has all permissions
   if (admin.role.slug === 'super-admin') return true;
@@ -97,6 +100,12 @@ export async function requirePermission(permission: string) {
   const session = await auth();
   if (!session?.user || (session.user as any).role !== 'admin') {
     return { authorized: false, response: NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 }) };
+  }
+
+  // Super-admin check via session roleSlug — avoids extra DB query
+  const roleSlug = (session.user as any).roleSlug || '';
+  if (roleSlug === 'super-admin') {
+    return { authorized: true, adminId: Number(session.user.id), session };
   }
 
   const adminId = Number(session.user.id);
