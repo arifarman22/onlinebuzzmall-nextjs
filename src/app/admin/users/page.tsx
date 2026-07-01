@@ -41,6 +41,9 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: P
   // Manual status filter override
   if (statusFilter !== undefined && statusFilter !== '') {
     where.status = Number(statusFilter);
+  } else if (!where.status) {
+    // Exclude soft-deleted users unless a specific status filter is active
+    where.status = { not: -1 };
   }
 
   if (search) {
