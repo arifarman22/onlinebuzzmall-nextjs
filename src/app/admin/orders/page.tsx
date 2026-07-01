@@ -1,9 +1,11 @@
 import { db } from '@/lib/db';
 import { Card, CardContent } from '@/components/ui/Card';
-import { formatAmount, formatDate } from '@/lib/utils';
+import { formatAmount, formatDate, formatDateTime } from '@/lib/utils';
 import Badge from '@/components/ui/Badge';
 import Pagination from '@/components/ui/Pagination';
 import SearchFilter from '@/components/ui/SearchFilter';
+import Link from 'next/link';
+import OrderProductsExpand from '@/components/admin/OrderProductsExpand';
 
 const PER_PAGE = 20;
 
@@ -28,7 +30,19 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
       orderBy: { id: 'desc' },
       skip: (page - 1) * PER_PAGE,
       take: PER_PAGE,
-      include: { user: { select: { username: true } } },
+      include: {
+        user: { select: { id: true, username: true } },
+        order: {
+          include: {
+            platform: { select: { id: true, name: true } },
+            orderDetails: {
+              include: {
+                product: { select: { id: true, name: true, image: true } },
+              },
+            },
+          },
+        },
+      },
     }),
     db.orderComplete.count({ where }),
   ]);
@@ -51,40 +65,78 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
       />
 
       <Card>
-        <CardContent>
+        <CardContent className="p-0">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-200 bg-gray-50">
-                  <th className="text-left py-3 px-3 font-medium text-gray-500 text-xs">Order No</th>
-                  <th className="text-left py-3 px-3 font-medium text-gray-500 text-xs">User</th>
-                  <th className="text-left py-3 px-3 font-medium text-gray-500 text-xs">Price</th>
-                  <th className="text-left py-3 px-3 font-medium text-gray-500 text-xs">Profit</th>
-                  <th className="text-left py-3 px-3 font-medium text-gray-500 text-xs">Status</th>
-                  <th className="text-left py-3 px-3 font-medium text-gray-500 text-xs">Date</th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-500 text-xs">Order No</th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-500 text-xs">Type</th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-500 text-xs">Platform</th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-500 text-xs">User</th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-500 text-xs">Products</th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-500 text-xs">Amount</th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-500 text-xs">Profit</th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-500 text-xs">Balance After</th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-500 text-xs">Status</th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-500 text-xs">Date</th>
                 </tr>
               </thead>
               <tbody>
                 {orders.length === 0 ? (
-                  <tr><td colSpan={6} className="py-12 text-center text-gray-400">No orders found</td></tr>
+                  <tr><td colSpan={10} className="py-12 text-center text-gray-400">No orders found</td></tr>
                 ) : orders.map((o) => (
-                  <tr key={o.id} className="border-b border-gray-50 hover:bg-gray-50">
-                    <td className="py-3 px-3 font-mono text-xs">{o.order_no}</td>
-                    <td className="py-3 px-3 font-medium">{o.user?.username}</td>
-                    <td className="py-3 px-3">{formatAmount(o.price)}</td>
-                    <td className="py-3 px-3 text-emerald-600 font-medium">{formatAmount(o.profit)}</td>
-                    <td className="py-3 px-3">
-                      <Badge variant={o.status === 1 ? 'success' : 'warning'}>
-                        {o.status === 1 ? 'Completed' : 'Pending'}
-                      </Badge>
-                    </td>
-                    <td className="py-3 px-3 text-gray-500 text-xs">{o.end_at ? formatDate(o.end_at) : formatDate(o.created_at)}</td>
-                  </tr>
+                  <tr key={o.id} className="border-b border-gray-100 hover:bg-gray-50">
+                      <td className="py-3 px-4 font-mono text-xs text-gray-700">{o.order_no || '—'}</td>
+                      <td className="py-3 px-4">
+                        <span className="px-2 py-0.5 bg-indigo-50 text-indigo-700 text-xs font-medium rounded-full">
+                          {o.type || o.order?.type || 'Standard'}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 text-xs text-gray-700">
+                        {o.order?.platform ? (
+                          <Link href={`/admin/platforms`} className="text-indigo-600 hover:underline">
+                            {o.order.platform.name}
+                          </Link>
+                        ) : '—'}
+                      </td>
+                      <td className="py-3 px-4">
+                        {o.user ? (
+                          <Link href={`/admin/users/${o.user.id}`} className="text-indigo-600 hover:underline font-medium text-xs">
+                            @{o.user.username}
+                          </Link>
+                        ) : '—'}
+                      </td>
+                      <td className="py-3 px-4">
+                        <OrderProductsExpand
+                          orderId={o.id}
+                          products={(o.order?.orderDetails || []).map(d => ({
+                            name: d.product?.name || 'Unknown',
+                            quantity: d.quantity,
+                            price: d.price,
+                            image: d.product?.image || null,
+                          }))}
+                        />
+                      </td>
+                      <td className="py-3 px-4 font-medium text-gray-900">{formatAmount(o.price)}</td>
+                      <td className="py-3 px-4 font-semibold text-emerald-600">{formatAmount(o.profit)}</td>
+                      <td className="py-3 px-4 text-gray-600 text-xs">{formatAmount(o.balance)}</td>
+                      <td className="py-3 px-4">
+                        <Badge variant={o.status === 1 ? 'success' : 'warning'}>
+                          {o.status === 1 ? 'Completed' : 'Pending'}
+                        </Badge>
+                      </td>
+                      <td className="py-3 px-4 text-gray-400 text-xs whitespace-nowrap">
+                        {o.end_at ? formatDateTime(o.end_at) : formatDate(o.created_at)}
+                      </td>
+                    </tr>
                 ))}
               </tbody>
             </table>
           </div>
-          <Pagination currentPage={page} totalPages={totalPages} basePath="/admin/orders" />
+          <div className="px-4">
+            <Pagination currentPage={page} totalPages={totalPages} basePath="/admin/orders" />
+          </div>
         </CardContent>
       </Card>
     </div>
