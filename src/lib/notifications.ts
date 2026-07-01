@@ -6,17 +6,17 @@ interface NotifyParams {
   templateName: string;
   variables?: Record<string, string>;
   title?: string;
-  link?: string; // navigation link stored in type field as "system|/path"
+  link?: string;      // user-side navigation link
+  adminLink?: string; // admin-side navigation link
 }
 
-export function sendNotification({ userId, templateName, variables = {}, title, link }: NotifyParams) {
-  // Fire and forget — never block the API response
-  _sendNotificationAsync({ userId, templateName, variables, title, link }).catch(err =>
+export function sendNotification({ userId, templateName, variables = {}, title, link, adminLink }: NotifyParams) {
+  _sendNotificationAsync({ userId, templateName, variables, title, link, adminLink }).catch(err =>
     console.error('sendNotification error:', err)
   );
 }
 
-async function _sendNotificationAsync({ userId, templateName, variables = {}, title, link }: NotifyParams) {
+async function _sendNotificationAsync({ userId, templateName, variables = {}, title, link, adminLink }: NotifyParams) {
     const template = await db.notificationTemplate.findFirst({ where: { name: templateName } });
     if (!template) return;
 
@@ -48,13 +48,13 @@ async function _sendNotificationAsync({ userId, templateName, variables = {}, ti
     // Remove any unresolved {{variables}}
     messageText = messageText.replace(/\{\{[^}]+\}\}/g, '').replace(/\s+/g, ' ').trim().substring(0, 500);
 
-    // Log notification in database
+    // Log notification in database — type stores: system|userLink|adminLink
     await db.notificationLog.create({
       data: {
         user_id: userId,
         title: notifTitle,
         message: messageText,
-        type: link ? `system|${link}` : 'system',
+        type: `system|${link || ''}|${adminLink || ''}`,
         is_read: 0,
       },
     });

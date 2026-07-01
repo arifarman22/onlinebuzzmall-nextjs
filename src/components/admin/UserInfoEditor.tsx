@@ -23,8 +23,8 @@ export default function UserInfoEditor({ user }: { user: UserInfo }) {
   const [orderLimit, setOrderLimit] = useState(String(user.daily_order_limit));
   const [loginPassword, setLoginPassword] = useState('');
   const [withdrawalPassword, setWithdrawalPassword] = useState('');
-  const [showLoginPw, setShowLoginPw] = useState(false);
-  const [showWithdrawPw, setShowWithdrawPw] = useState(false);
+  const [showLoginPw, setShowLoginPw] = useState(true);
+  const [showWithdrawPw, setShowWithdrawPw] = useState(true);
 
   const handleAction = async (action: string, data: any, key: string) => {
     setLoading(key);

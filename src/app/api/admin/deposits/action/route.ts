@@ -81,6 +81,8 @@ export async function POST(req: NextRequest) {
           post_balance: String(updatedDeposit.user?.balance || 0),
         },
         title: action === 'approve' ? `Deposit of $${updatedDeposit.amount} approved` : `Deposit of $${updatedDeposit.amount} rejected`,
+        link: '/transactions',
+        adminLink: `/admin/deposits/${deposit_id}`,
       });
     }
 

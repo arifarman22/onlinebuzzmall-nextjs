@@ -1,10 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { MessageCircle, Send, Headphones, Type, Save, Check } from 'lucide-react';
+import { MessageCircle, Send, Headphones, Type, Save, Check, Mail } from 'lucide-react';
 
 export default function AdminSupportSettingsPage() {
-  const [form, setForm] = useState({ support_telegram: '', support_whatsapp: '', support_livechat: '', support_header: '' });
+  const [form, setForm] = useState({ support_telegram: '', support_whatsapp: '', support_livechat: '', support_livechat_label: '', support_header: '', support_email: '' });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -14,7 +14,7 @@ export default function AdminSupportSettingsPage() {
       if (data.success && data.data) {
         const map: Record<string, string> = {};
         data.data.forEach((s: any) => { map[s.key] = s.value || ''; });
-        setForm({ support_telegram: map.support_telegram || '', support_whatsapp: map.support_whatsapp || '', support_livechat: map.support_livechat || '', support_header: map.support_header || '' });
+        setForm({ support_telegram: map.support_telegram || '', support_whatsapp: map.support_whatsapp || '', support_livechat: map.support_livechat || '', support_livechat_label: map.support_livechat_label || '', support_header: map.support_header || '', support_email: map.support_email || '' });
       }
     }).finally(() => setLoading(false));
   }, []);
@@ -67,6 +67,12 @@ export default function AdminSupportSettingsPage() {
             <Headphones size={14} className="text-purple-500" /> Live Chat Link
           </label>
           <input value={form.support_livechat} onChange={(e) => setForm({ ...form, support_livechat: e.target.value })} className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-indigo-500" placeholder="https://tawk.to/chat/xxx" />
+        </div>
+        <div>
+          <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
+            <Mail size={14} className="text-orange-500" /> Support Email
+          </label>
+          <input type="email" value={form.support_email} onChange={(e) => setForm({ ...form, support_email: e.target.value })} className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-indigo-500" placeholder="support@yourdomain.com" />
         </div>
       </div>
     </div>

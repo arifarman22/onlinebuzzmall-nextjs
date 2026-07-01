@@ -37,6 +37,8 @@ export async function POST(req: NextRequest) {
       templateName,
       variables: { amount: String(amount) },
       title: action === 'approve' ? `Withdrawal of $${amount} approved` : `Withdrawal of $${amount} rejected`,
+      link: '/transactions',
+      adminLink: `/admin/withdrawals?search=${user_id}`,
     });
 
     return NextResponse.json({ success: true, message: `Withdrawal ${action}d successfully` });

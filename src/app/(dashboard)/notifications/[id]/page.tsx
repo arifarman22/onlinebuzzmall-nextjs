@@ -17,7 +17,8 @@ function cleanMessage(msg: string | null): string {
 function parseLink(type: string | null): string | null {
   if (!type) return null;
   const parts = type.split('|');
-  return parts.length === 2 ? parts[1] : null;
+  // format: system|userLink|adminLink — return userLink
+  return parts[1] || null;
 }
 
 function getLinkLabel(link: string): string {

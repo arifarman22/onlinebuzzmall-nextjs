@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { signOut } from 'next-auth/react';
-import { Menu, X, Home, ShoppingCart, Wallet, History, LogOut, ArrowDownToLine, ArrowUpFromLine, Users } from 'lucide-react';
+import { Menu, X, Home, ShoppingCart, Wallet, History, LogOut, ArrowDownToLine, ArrowUpFromLine, Users, BookOpen, HelpCircle } from 'lucide-react';
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: Home },
@@ -15,6 +15,8 @@ const navItems = [
   { href: '/withdraw', label: 'Withdraw', icon: ArrowUpFromLine },
   { href: '/transactions', label: 'Transactions', icon: History },
   { href: '/invite', label: 'Referrals', icon: Users },
+  { href: '/help', label: 'Help', icon: BookOpen },
+  { href: '/support', label: 'Support', icon: HelpCircle },
 ];
 
 interface Props {

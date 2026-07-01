@@ -2,10 +2,11 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, HelpCircle, User, ClipboardList } from 'lucide-react';
+import { Home, HelpCircle, User, ClipboardList, ShoppingBag } from 'lucide-react';
 
 const navItems = [
   { href: '/dashboard', label: 'Home', icon: Home },
+  { href: '/orders', label: 'Orders', icon: ShoppingBag },
   { href: '/records', label: 'Record', icon: ClipboardList },
   { href: '/support', label: 'Support', icon: HelpCircle },
   { href: '/profile', label: 'Profile', icon: User },
@@ -25,7 +26,7 @@ export default function BottomNav() {
               href={item.href}
               style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '2px', textDecoration: 'none', color: isActive ? '#34d399' : '#64748b' }}
             >
-              <item.icon size={18} strokeWidth={isActive ? 2.5 : 2} />
+              <item.icon size={16} strokeWidth={isActive ? 2.5 : 2} />
               <span style={{ fontSize: '9px', fontWeight: isActive ? 600 : 500 }}>
                 {item.label}
               </span>
