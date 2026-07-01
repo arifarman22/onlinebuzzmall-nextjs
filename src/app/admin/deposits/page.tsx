@@ -145,7 +145,7 @@ export default async function AdminDepositsPage({ searchParams }: { searchParams
                       </td>
                       {filter === 'pending' && (
                         <td className="py-3 px-4">
-                          {d.status === 2 && <DepositActions depositId={d.id} />}
+                          {d.status === 2 && <DepositActions depositId={d.id} amount={d.amount} userName={d.user?.username || ''} />}
                         </td>
                       )}
                     </tr>

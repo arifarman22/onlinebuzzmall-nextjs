@@ -51,7 +51,6 @@ next-env.d.ts
 
 # Large asset folders (served from production/CDN)
 /public/assets/verify/
-/public/assets/images/products/
 
 # Database exports
 *.sql

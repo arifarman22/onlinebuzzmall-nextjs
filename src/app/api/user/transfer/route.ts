@@ -25,52 +25,44 @@ export async function POST(req: NextRequest) {
   const { username, amount } = parsed.data;
 
   try {
-    const result = await db.$transaction(async (tx) => {
-      const settings = await tx.generalSetting.findFirst();
-      if (!settings?.balance_transfer) {
-        throw new Error('Balance transfer is disabled');
-      }
+    const settings = await db.generalSetting.findFirst();
+    if (!settings?.balance_transfer) throw new Error('Balance transfer is disabled');
 
-      const user = await tx.user.findUnique({ where: { id: userId } });
-      if (!user) throw new Error('User not found');
+    const user = await db.user.findUnique({ where: { id: userId } });
+    if (!user) throw new Error('User not found');
 
-      const toUser = await tx.user.findFirst({ where: { username } });
-      if (!toUser) throw new Error('Recipient not found');
-      if (toUser.id === userId) throw new Error('Cannot transfer to yourself');
+    const toUser = await db.user.findFirst({ where: { username } });
+    if (!toUser) throw new Error('Recipient not found');
+    if (toUser.id === userId) throw new Error('Cannot transfer to yourself');
 
-      if (settings.balance_transfer_min && amount < settings.balance_transfer_min) {
-        throw new Error(`Minimum transfer: $${settings.balance_transfer_min}`);
-      }
-      if (settings.balance_transfer_max && amount > settings.balance_transfer_max) {
-        throw new Error(`Maximum transfer: $${settings.balance_transfer_max}`);
-      }
+    if (settings.balance_transfer_min && amount < settings.balance_transfer_min) {
+      throw new Error(`Minimum transfer: $${settings.balance_transfer_min}`);
+    }
+    if (settings.balance_transfer_max && amount > settings.balance_transfer_max) {
+      throw new Error(`Maximum transfer: $${settings.balance_transfer_max}`);
+    }
 
-      const charge = (settings.balance_transfer_fixed_charge || 0) + (amount * (settings.balance_transfer_per_charge || 0) / 100);
-      const totalDeduct = amount + charge;
+    const charge = (settings.balance_transfer_fixed_charge || 0) + (amount * (settings.balance_transfer_per_charge || 0) / 100);
+    const totalDeduct = amount + charge;
 
-      if (user.balance < totalDeduct) {
-        throw new Error('Insufficient balance');
-      }
+    if (user.balance < totalDeduct) throw new Error('Insufficient balance');
 
-      const trx = generateTrx();
+    const trx = generateTrx();
 
-      // Deduct from sender
-      await tx.user.update({ where: { id: userId }, data: { balance: { decrement: totalDeduct } } });
-      const sender = await tx.user.findUnique({ where: { id: userId } });
+    // Deduct from sender
+    await db.user.update({ where: { id: userId }, data: { balance: { decrement: totalDeduct } } });
+    const sender = await db.user.findUnique({ where: { id: userId } });
 
-      await tx.transaction.create({
-        data: { user_id: userId, amount: totalDeduct, post_balance: sender!.balance, charge, trx_type: '-', remark: 'balance_transfer', details: `Balance transfer to ${toUser.username}`, trx },
-      });
+    await db.transaction.create({
+      data: { user_id: userId, amount: totalDeduct, post_balance: sender!.balance, charge, trx_type: '-', remark: 'balance_transfer', details: `Balance transfer to ${toUser.username}`, trx },
+    });
 
-      // Credit recipient
-      await tx.user.update({ where: { id: toUser.id }, data: { balance: { increment: amount } } });
-      const recipient = await tx.user.findUnique({ where: { id: toUser.id } });
+    // Credit recipient
+    await db.user.update({ where: { id: toUser.id }, data: { balance: { increment: amount } } });
+    const recipient = await db.user.findUnique({ where: { id: toUser.id } });
 
-      await tx.transaction.create({
-        data: { user_id: toUser.id, amount, post_balance: recipient!.balance, charge: 0, trx_type: '+', remark: 'balance_transfer', details: `Balance received from ${user.username}`, trx },
-      });
-
-      return true;
+    await db.transaction.create({
+      data: { user_id: toUser.id, amount, post_balance: recipient!.balance, charge: 0, trx_type: '+', remark: 'balance_transfer', details: `Balance received from ${user.username}`, trx },
     });
 
     return NextResponse.json({ success: true, message: 'Balance transferred successfully' });

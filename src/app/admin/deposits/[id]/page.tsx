@@ -17,10 +17,10 @@ export default async function AdminDepositDetailPage({ params }: { params: Promi
 
   if (!deposit) return notFound();
 
-  const detail = deposit.detail as any;
+  const detail = typeof deposit.detail === 'string' ? JSON.parse(deposit.detail) : deposit.detail as any;
   const submittedFields = detail?.submitted_fields || {};
   const gatewayName = detail?.gateway_name || 'Unknown';
-  const proofUrl = detail?.proof_url || null;
+  const proofUrl = detail?.proof_url ? (detail.proof_url.startsWith('http') ? detail.proof_url : `/${detail.proof_url}`) : null;
 
   // Fetch user's recent deposits
   const userDeposits = await db.deposit.findMany({
@@ -68,7 +68,7 @@ export default async function AdminDepositDetailPage({ params }: { params: Promi
             <p className="text-sm font-semibold text-amber-800">This deposit is awaiting approval</p>
             <p className="text-xs text-amber-600 mt-0.5">Review the details below before taking action</p>
           </div>
-          <DepositActions depositId={deposit.id} />
+          <DepositActions depositId={deposit.id} amount={deposit.amount} userName={`${deposit.user?.firstname || ''} ${deposit.user?.lastname || ''}`.trim() || deposit.user?.username || 'User'} />
         </div>
       )}
 
@@ -200,7 +200,7 @@ export default async function AdminDepositDetailPage({ params }: { params: Promi
                   <tr key={d.id} className={`border-b border-gray-50 ${d.id === depositId ? 'bg-indigo-50' : 'hover:bg-gray-50'}`}>
                     <td className="py-2.5 px-4 font-mono text-xs">{d.trx || '-'}</td>
                     <td className="py-2.5 px-4 font-semibold">{formatAmount(d.amount)}</td>
-                    <td className="py-2.5 px-4 text-xs text-gray-500">{(d.detail as any)?.gateway_name || '-'}</td>
+                    <td className="py-2.5 px-4 text-xs text-gray-500">{(typeof d.detail === 'string' ? JSON.parse(d.detail) : d.detail as any)?.gateway_name || '-'}</td>
                     <td className="py-2.5 px-4">
                       <Badge variant={statusMap[d.status]?.variant || 'default'}>
                         {statusMap[d.status]?.label || 'Unknown'}

@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Bell, X, CheckCheck } from 'lucide-react';
+import { Bell, X, CheckCheck, ArrowRight } from 'lucide-react';
+import Link from 'next/link';
 
 interface Notification {
   id: number;
@@ -63,7 +64,7 @@ export default function AdminNotificationBell() {
                 <button onClick={() => setOpen(false)}><X size={14} className="text-gray-400" /></button>
               </div>
             </div>
-            <div className="max-h-96 overflow-y-auto">
+            <div className="max-h-80 overflow-y-auto">
               {notifications.length === 0 ? (
                 <p className="text-xs text-gray-400 text-center py-8">No notifications</p>
               ) : (
@@ -79,6 +80,9 @@ export default function AdminNotificationBell() {
                 ))
               )}
             </div>
+            <Link href="/admin/notifications/log" onClick={() => setOpen(false)} className="flex items-center justify-center gap-1.5 px-4 py-3 text-xs font-medium text-indigo-600 hover:bg-indigo-50 border-t border-gray-100 transition-colors">
+              View all Notifications <ArrowRight size={12} />
+            </Link>
           </div>
         </>
       )}

@@ -26,36 +26,27 @@ export async function POST(req: NextRequest) {
   const { plan_id } = parsed.data;
 
   try {
-    const plan = await db.$transaction(async (tx: any) => {
-      const user = await tx.user.findUnique({ where: { id: userId } });
-      if (!user) throw new Error('User not found');
+    const user = await db.user.findUnique({ where: { id: userId } });
+    if (!user) throw new Error('User not found');
 
-      const plan = await tx.plan.findUnique({ where: { id: plan_id } });
-      if (!plan || plan.status !== 1) throw new Error('Plan not found');
+    const plan = await db.plan.findUnique({ where: { id: plan_id } });
+    if (!plan || plan.status !== 1) throw new Error('Plan not found');
 
-      if (user.balance < plan.price) throw new Error('Insufficient balance');
+    if (user.balance < plan.price) throw new Error('Insufficient balance');
 
-      await tx.user.update({
-        where: { id: userId },
-        data: { balance: { decrement: plan.price }, plan_id: plan.id, total_invest: { increment: plan.price } },
-      });
+    await db.user.update({
+      where: { id: userId },
+      data: { balance: { decrement: plan.price }, plan_id: plan.id, total_invest: { increment: plan.price } },
+    });
 
-      const updatedUser = await tx.user.findUnique({ where: { id: userId } });
+    const updatedUser = await db.user.findUnique({ where: { id: userId } });
 
-      await tx.transaction.create({
-        data: {
-          user_id: userId,
-          amount: plan.price,
-          trx_type: '-',
-          details: `Purchased ${plan.name}`,
-          remark: 'purchased_plan',
-          trx: generateTrx(),
-          post_balance: updatedUser!.balance,
-          charge: 0,
-        },
-      });
-
-      return plan;
+    await db.transaction.create({
+      data: {
+        user_id: userId, amount: plan.price, trx_type: '-',
+        details: `Purchased ${plan.name}`, remark: 'purchased_plan',
+        trx: generateTrx(), post_balance: updatedUser!.balance, charge: 0,
+      },
     });
 
     // MLM commissions (outside transaction as they're non-critical)

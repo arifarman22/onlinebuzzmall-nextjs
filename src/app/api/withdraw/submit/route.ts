@@ -28,59 +28,43 @@ export async function POST(req: NextRequest) {
   const { method_id, amount } = parsed.data;
 
   try {
-    await db.$transaction(async (tx) => {
-      const user = await tx.user.findUnique({ where: { id: userId } });
-      if (!user) throw new Error('User not found');
+    const user = await db.user.findUnique({ where: { id: userId } });
+    if (!user) throw new Error('User not found');
 
-      const method = await tx.withdrawMethod.findUnique({ where: { id: method_id } });
-      if (!method || method.status !== 1) throw new Error('Method not available');
+    const method = await db.withdrawMethod.findUnique({ where: { id: method_id } });
+    if (!method || method.status !== 1) throw new Error('Method not available');
 
-      if (amount < method.min_limit || amount > method.max_limit) {
-        throw new Error(`Amount must be between $${method.min_limit} and $${method.max_limit}`);
-      }
+    if (amount < method.min_limit || amount > method.max_limit) {
+      throw new Error(`Amount must be between $${method.min_limit} and $${method.max_limit}`);
+    }
 
-      const charge = method.fixed_charge + (amount * method.percent_charge / 100);
-      const afterCharge = amount - charge;
-      const availableBalance = user.balance - user.freeze_amount;
+    const charge = method.fixed_charge + (amount * method.percent_charge / 100);
+    const afterCharge = amount - charge;
+    const availableBalance = user.balance - user.freeze_amount;
 
-      if (availableBalance < amount) throw new Error('Insufficient balance');
+    if (availableBalance < amount) throw new Error('Insufficient balance');
 
-      await tx.user.update({
-        where: { id: userId },
-        data: { balance: { decrement: amount } },
-      });
+    await db.user.update({ where: { id: userId }, data: { balance: { decrement: amount } } });
 
-      const trx = generateTrx();
+    const trx = generateTrx();
 
-      await tx.withdrawal.create({
-        data: {
-          user_id: userId,
-          method_id,
-          amount,
-          currency: method.currency,
-          rate: method.rate,
-          charge,
-          final_amount: afterCharge * method.rate,
-          after_charge: afterCharge,
-          trx,
-          status: 2,
-        },
-      });
+    await db.withdrawal.create({
+      data: {
+        user_id: userId, method_id, amount,
+        currency: method.currency, rate: method.rate, charge,
+        final_amount: afterCharge * method.rate, after_charge: afterCharge,
+        trx, status: 2,
+      },
+    });
 
-      const updatedUser = await tx.user.findUnique({ where: { id: userId } });
+    const updatedUser = await db.user.findUnique({ where: { id: userId } });
 
-      await tx.transaction.create({
-        data: {
-          user_id: userId,
-          amount,
-          post_balance: updatedUser!.balance,
-          charge,
-          trx_type: '-',
-          details: `Withdraw via ${method.name}`,
-          trx: generateTrx(),
-          remark: 'withdraw',
-        },
-      });
+    await db.transaction.create({
+      data: {
+        user_id: userId, amount, post_balance: updatedUser!.balance, charge,
+        trx_type: '-', details: `Withdraw via ${method.name}`,
+        trx: generateTrx(), remark: 'withdraw',
+      },
     });
 
     sendAdminNotification({

@@ -18,22 +18,17 @@ export async function POST(req: NextRequest) {
   if (!guard.authorized) return guard.response;
 
   try {
-    await db.$transaction(async (tx: any) => {
-      const withdrawal = await tx.withdrawal.findUnique({ where: { id: withdrawal_id } });
-      if (!withdrawal || withdrawal.status !== 2) {
-        throw new Error('Not found or already processed');
-      }
+    const withdrawal = await db.withdrawal.findUnique({ where: { id: withdrawal_id } });
+    if (!withdrawal || withdrawal.status !== 2) {
+      return NextResponse.json({ success: false, message: 'Not found or already processed' }, { status: 400 });
+    }
 
-      if (action === 'approve') {
-        await tx.withdrawal.update({ where: { id: withdrawal_id }, data: { status: 1 } });
-      } else {
-        await tx.withdrawal.update({ where: { id: withdrawal_id }, data: { status: 3 } });
-        await tx.user.update({
-          where: { id: user_id },
-          data: { balance: { increment: amount } },
-        });
-      }
-    });
+    if (action === 'approve') {
+      await db.withdrawal.update({ where: { id: withdrawal_id }, data: { status: 1 } });
+    } else {
+      await db.withdrawal.update({ where: { id: withdrawal_id }, data: { status: 3 } });
+      await db.user.update({ where: { id: user_id }, data: { balance: { increment: amount } } });
+    }
 
     // Send notification
     const templateName = action === 'approve' ? 'Withdraw - Approved' : 'Withdraw - Rejected';
