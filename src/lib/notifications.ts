@@ -6,16 +6,17 @@ interface NotifyParams {
   templateName: string;
   variables?: Record<string, string>;
   title?: string;
+  link?: string; // navigation link stored in type field as "system|/path"
 }
 
-export function sendNotification({ userId, templateName, variables = {}, title }: NotifyParams) {
+export function sendNotification({ userId, templateName, variables = {}, title, link }: NotifyParams) {
   // Fire and forget — never block the API response
-  _sendNotificationAsync({ userId, templateName, variables, title }).catch(err =>
+  _sendNotificationAsync({ userId, templateName, variables, title, link }).catch(err =>
     console.error('sendNotification error:', err)
   );
 }
 
-async function _sendNotificationAsync({ userId, templateName, variables = {}, title }: NotifyParams) {
+async function _sendNotificationAsync({ userId, templateName, variables = {}, title, link }: NotifyParams) {
     const template = await db.notificationTemplate.findFirst({ where: { name: templateName } });
     if (!template) return;
 
@@ -38,8 +39,12 @@ async function _sendNotificationAsync({ userId, templateName, variables = {}, ti
 
     // Build clean plain text message
     let messageText = replaceVars(template.email_body || template.subject || '');
+    // Decode HTML entities first
+    messageText = messageText
+      .replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'");
     // Strip HTML tags
-    messageText = messageText.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"');
+    messageText = messageText.replace(/<[^>]*>/g, '');
     // Remove any unresolved {{variables}}
     messageText = messageText.replace(/\{\{[^}]+\}\}/g, '').replace(/\s+/g, ' ').trim().substring(0, 500);
 
@@ -49,7 +54,7 @@ async function _sendNotificationAsync({ userId, templateName, variables = {}, ti
         user_id: userId,
         title: notifTitle,
         message: messageText,
-        type: 'system',
+        type: link ? `system|${link}` : 'system',
         is_read: 0,
       },
     });
