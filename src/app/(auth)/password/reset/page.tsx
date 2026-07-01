@@ -56,7 +56,7 @@ export default function PasswordResetPage() {
         body: JSON.stringify({ email: form.email, otp: form.otp, password: form.password }),
       });
       const data = await res.json();
-      if (!res.ok) {
+      if (!data.success) {
         setError(data.message || 'Failed to reset password');
       } else {
         setStep('done');
