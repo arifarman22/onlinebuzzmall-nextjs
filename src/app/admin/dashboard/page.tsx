@@ -1,4 +1,5 @@
 import { db } from '@/lib/db';
+import { unstable_cache } from 'next/cache';
 import { Card, CardContent } from '@/components/ui/Card';
 import { formatAmount } from '@/lib/utils';
 import Link from 'next/link';
@@ -9,51 +10,73 @@ import {
 import { AdminBrowserChart, AdminOSChart, AdminCountryChart } from '@/components/admin/AdminPieCharts';
 import { ClientAdminRevenueChart, ClientAdminUserChart } from '@/components/admin/ClientAdminCharts';
 
+const getDashboardStats = unstable_cache(
+  async () => {
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 29);
+    thirtyDaysAgo.setHours(0, 0, 0, 0);
+
+    const [
+      totalUsers, activeUsers, unverifiedEmail, unverifiedMobile,
+      totalDepositSum, totalWithdrawSum, pendingDeposits, rejectedDeposits,
+      rawDeposits, rawWithdrawals, rawUsers,
+    ] = await Promise.all([
+      db.user.count(),
+      db.user.count({ where: { status: 1 } }),
+      db.user.count({ where: { ev: 0 } }),
+      db.user.count({ where: { sv: 0 } }),
+      db.deposit.aggregate({ where: { status: 1 }, _sum: { amount: true } }),
+      db.withdrawal.aggregate({ where: { status: 1 }, _sum: { amount: true } }),
+      db.deposit.count({ where: { status: 2 } }),
+      db.deposit.count({ where: { status: 3 } }),
+      db.deposit.findMany({
+        where: { status: 1, created_at: { gte: thirtyDaysAgo } },
+        select: { created_at: true, amount: true },
+      }),
+      db.withdrawal.findMany({
+        where: { status: 1, created_at: { gte: thirtyDaysAgo } },
+        select: { created_at: true, amount: true },
+      }),
+      db.user.findMany({
+        where: { created_at: { gte: thirtyDaysAgo } },
+        select: { created_at: true },
+      }),
+    ]);
+
+    // Build last 30 days labels
+    const days = Array.from({ length: 30 }, (_, i) => {
+      const d = new Date();
+      d.setDate(d.getDate() - (29 - i));
+      d.setHours(0, 0, 0, 0);
+      return d;
+    });
+
+    const fmt = (d: Date) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    const dayKey = (d: Date) => d.toISOString().slice(0, 10);
+
+    const depMap: Record<string, number> = {};
+    const witMap: Record<string, number> = {};
+    const usrMap: Record<string, number> = {};
+
+    for (const r of rawDeposits) depMap[dayKey(r.created_at)] = (depMap[dayKey(r.created_at)] || 0) + r.amount;
+    for (const r of rawWithdrawals) witMap[dayKey(r.created_at)] = (witMap[dayKey(r.created_at)] || 0) + r.amount;
+    for (const r of rawUsers) usrMap[dayKey(r.created_at)] = (usrMap[dayKey(r.created_at)] || 0) + 1;
+
+    const revenueData = days.map(d => ({ date: fmt(d), deposits: depMap[dayKey(d)] || 0, withdrawals: witMap[dayKey(d)] || 0 }));
+    const userData = days.map(d => ({ date: fmt(d), users: usrMap[dayKey(d)] || 0 }));
+
+    return { totalUsers, activeUsers, unverifiedEmail, unverifiedMobile, totalDepositSum, totalWithdrawSum, pendingDeposits, rejectedDeposits, revenueData, userData };
+  },
+  ['admin-dashboard'],
+  { revalidate: 120 }
+);
+
 export default async function AdminDashboardPage() {
-  const [
-    totalUsers,
-    activeUsers,
-    unverifiedEmail,
-    unverifiedMobile,
-    totalDepositSum,
-    totalWithdrawSum,
-    pendingDeposits,
-    rejectedDeposits,
-  ] = await Promise.all([
-    db.user.count(),
-    db.user.count({ where: { status: 1 } }),
-    db.user.count({ where: { ev: 0 } }),
-    db.user.count({ where: { sv: 0 } }),
-    db.deposit.aggregate({ where: { status: 1 }, _sum: { amount: true } }),
-    db.withdrawal.aggregate({ where: { status: 1 }, _sum: { amount: true } }),
-    db.deposit.count({ where: { status: 2 } }),
-    db.deposit.count({ where: { status: 3 } }),
-  ]);
-
-  // Revenue chart (last 30 days)
-  const revenueData = await Promise.all(
-    Array.from({ length: 30 }, (_, i) => {
-      const d = new Date(); d.setDate(d.getDate() - (29 - i)); d.setHours(0, 0, 0, 0); return d;
-    }).map(async (day) => {
-      const next = new Date(day); next.setDate(next.getDate() + 1);
-      const [dep, wit] = await Promise.all([
-        db.deposit.aggregate({ where: { status: 1, created_at: { gte: day, lt: next } }, _sum: { amount: true } }),
-        db.withdrawal.aggregate({ where: { status: 1, created_at: { gte: day, lt: next } }, _sum: { amount: true } }),
-      ]);
-      return { date: day.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }), deposits: dep._sum.amount || 0, withdrawals: wit._sum.amount || 0 };
-    })
-  );
-
-  // User registration chart (last 30 days)
-  const userData = await Promise.all(
-    Array.from({ length: 30 }, (_, i) => {
-      const d = new Date(); d.setDate(d.getDate() - (29 - i)); d.setHours(0, 0, 0, 0); return d;
-    }).map(async (day) => {
-      const next = new Date(day); next.setDate(next.getDate() + 1);
-      const count = await db.user.count({ where: { created_at: { gte: day, lt: next } } });
-      return { date: day.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }), users: count };
-    })
-  );
+  const {
+    totalUsers, activeUsers, unverifiedEmail, unverifiedMobile,
+    totalDepositSum, totalWithdrawSum, pendingDeposits, rejectedDeposits,
+    revenueData, userData,
+  } = await getDashboardStats();
 
   return (
     <div className="space-y-8">
