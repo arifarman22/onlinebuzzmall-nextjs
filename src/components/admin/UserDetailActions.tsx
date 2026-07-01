@@ -61,16 +61,19 @@ export default function UserDetailActions({ user }: Props) {
   return (
     <>
       {/* Action Buttons */}
-      <div className="bg-white rounded-xl border border-gray-200 p-5">
-        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">Balance & Account Actions</p>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <button onClick={() => setModal('balance')} className={`${btnBase} bg-emerald-50 text-emerald-700 hover:bg-emerald-100 justify-center`}>
+      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+        <div className="px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white">
+          <h3 className="text-sm font-semibold text-gray-900">Balance & Account Actions</h3>
+          <p className="text-xs text-gray-400 mt-0.5">Adjust balance, freeze funds or change account status</p>
+        </div>
+        <div className="p-5 grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <button onClick={() => setModal('balance')} className="flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 text-white text-sm font-medium hover:from-emerald-600 hover:to-emerald-700 shadow-sm transition-all">
             <DollarSign size={15} /> Adjust Balance
           </button>
-          <button onClick={() => setModal('freeze')} className={`${btnBase} bg-blue-50 text-blue-700 hover:bg-blue-100 justify-center`}>
+          <button onClick={() => setModal('freeze')} className="flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 text-white text-sm font-medium hover:from-blue-600 hover:to-blue-700 shadow-sm transition-all">
             <Lock size={15} /> Freeze Balance
           </button>
-          <button onClick={() => setModal('ban')} className={`${btnBase} justify-center ${user.status === 1 ? 'bg-red-50 text-red-700 hover:bg-red-100' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'}`}>
+          <button onClick={() => setModal('ban')} className={`flex items-center justify-center gap-2 py-3 rounded-xl text-white text-sm font-medium shadow-sm transition-all ${user.status === 1 ? 'bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700' : 'bg-gradient-to-br from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700'}`}>
             {user.status === 1 ? <><Ban size={15} /> Ban User</> : <><CheckCircle size={15} /> Unban User</>}
           </button>
         </div>
