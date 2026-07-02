@@ -3,6 +3,13 @@ import type { NextRequest } from 'next/server';
 import { securityMiddleware, addSecurityHeaders } from '@/lib/security';
 import jwt from 'jsonwebtoken';
 
+// Trusted origin — never derived from request headers
+const APP_ORIGIN = (process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000').replace(/\/$/, '');
+
+function safeRedirect(path: string): URL {
+  return new URL(path, APP_ORIGIN);
+}
+
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
@@ -34,14 +41,14 @@ export async function middleware(req: NextRequest) {
 
   if (protectedPaths.some((p) => pathname.startsWith(p))) {
     if (!isLoggedIn) {
-      return addSecurityHeaders(NextResponse.redirect(new URL('/login', req.nextUrl.origin)));
+      return addSecurityHeaders(NextResponse.redirect(safeRedirect('/login')));
     }
   }
 
   // Protect admin routes — imp_token does NOT grant admin access
   if (pathname.startsWith('/admin') && !pathname.startsWith('/admin/login')) {
     if (!sessionToken) {
-      return addSecurityHeaders(NextResponse.redirect(new URL('/admin/login', req.nextUrl.origin)));
+      return addSecurityHeaders(NextResponse.redirect(safeRedirect('/admin/login')));
     }
   }
 
