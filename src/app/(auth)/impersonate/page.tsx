@@ -11,6 +11,10 @@ function ImpersonateContent() {
   useEffect(() => {
     if (!token) { setStatus('Invalid link'); return; }
 
+    // Strip token from URL immediately so browser doesn't treat page as a tracking URL
+    // (fixes Edge/Firefox "Tracking Prevention blocked storage" warnings for third-party images)
+    window.history.replaceState({}, '', '/impersonate');
+
     fetch('/api/admin/impersonate/set-cookie', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

@@ -1,11 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
 
+function isSameOrigin(origin: string): boolean {
+  // Extract just the origin (scheme + host + port) from env vars for exact comparison
+  const candidates = [
+    process.env.NEXTAUTH_URL,
+    process.env.NEXT_PUBLIC_APP_URL,
+  ].filter(Boolean) as string[];
+
+  return candidates.some((url) => {
+    try {
+      return new URL(url).origin === origin;
+    } catch {
+      return false;
+    }
+  });
+}
+
 export async function POST(req: NextRequest) {
-  // FIX #8 (Medium): Verify request comes from our own origin to prevent CSRF
+  // CSRF protection: verify request origin matches our own domain
   const origin = req.headers.get('origin') || '';
-  const appOrigin = (process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL || '').replace(/\/$/, '');
-  if (appOrigin && !origin.startsWith(appOrigin)) {
+  // Only enforce in production — in dev NEXTAUTH_URL may not be set or may differ
+  if (process.env.NODE_ENV === 'production' && origin && !isSameOrigin(origin)) {
     return NextResponse.json({ success: false, message: 'Forbidden' }, { status: 403 });
   }
 
