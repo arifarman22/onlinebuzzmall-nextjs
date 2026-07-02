@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { BookOpen, X, AlertTriangle, ChevronRight } from 'lucide-react';
 import { sanitizeHtml } from '@/lib/sanitize';
 
@@ -12,27 +12,16 @@ interface Rule {
   image: string | null;
 }
 
-export default function PlatformRulesCards() {
-  const [rules, setRules] = useState<Rule[]>([]);
-  const [loaded, setLoaded] = useState(false);
+export default function PlatformRulesCards({ rules }: { rules: Rule[] }) {
   const [activeRule, setActiveRule] = useState<Rule | null>(null);
 
-  useEffect(() => {
-    fetch('/api/platform-rules')
-      .then((r) => r.json())
-      .then((data) => { if (data.success) setRules(data.data); })
-      .catch(() => {})
-      .finally(() => setLoaded(true));
-  }, []);
-
-  // Lock body scroll when modal open
   useEffect(() => {
     if (activeRule) document.body.style.overflow = 'hidden';
     else document.body.style.overflow = '';
     return () => { document.body.style.overflow = ''; };
   }, [activeRule]);
 
-  if (!loaded || rules.length === 0) return null;
+  if (rules.length === 0) return null;
 
   return (
     <>

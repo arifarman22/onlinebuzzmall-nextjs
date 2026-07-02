@@ -6,6 +6,11 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   compress: true,
 
+  // Tree-shake large icon/chart libraries — reduces JS bundle size
+  experimental: {
+    optimizePackageImports: ['lucide-react', 'recharts'],
+  },
+
   // Keep DB connections alive between requests
   serverExternalPackages: ['@prisma/client'],
 

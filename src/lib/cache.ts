@@ -1,48 +1,19 @@
-
-interface CacheEntry<T> {
-  data: T;
-  expiresAt: number;
-}
-
-const cache = new Map<string, CacheEntry<any>>();
+import { unstable_cache, revalidateTag } from 'next/cache';
 
 /**
- * Get or set cached data.
- * @param key - Cache key
- * @param ttlMs - Time to live in milliseconds
- * @param fetcher - Async function to fetch data if cache miss
+ * Wraps a fetcher with Next.js Data Cache (persists across cold starts).
+ * @param key - Unique cache key (also used as tag for invalidation)
+ * @param ttlSeconds - Revalidation interval in seconds
+ * @param fetcher - Async function to fetch data
  */
-export async function cached<T>(key: string, ttlMs: number, fetcher: () => Promise<T>): Promise<T> {
-  const now = Date.now();
-  const entry = cache.get(key);
-
-  if (entry && entry.expiresAt > now) {
-    return entry.data;
-  }
-
-  const data = await fetcher();
-  cache.set(key, { data, expiresAt: now + ttlMs });
-
-  // Cleanup old entries periodically (every 100 sets)
-  if (cache.size > 200) {
-    for (const [k, v] of cache) {
-      if (v.expiresAt < now) cache.delete(k);
-    }
-  }
-
-  return data;
+export function cached<T>(key: string, ttlSeconds: number, fetcher: () => Promise<T>): Promise<T> {
+  return unstable_cache(fetcher, [key], { revalidate: ttlSeconds, tags: [key] })();
 }
 
 /**
- * Invalidate a specific cache key or pattern.
+ * Invalidate a specific cache tag. Call from a Server Action or Route Handler.
  */
 export function invalidateCache(keyOrPrefix: string) {
-  if (keyOrPrefix.endsWith('*')) {
-    const prefix = keyOrPrefix.slice(0, -1);
-    for (const key of cache.keys()) {
-      if (key.startsWith(prefix)) cache.delete(key);
-    }
-  } else {
-    cache.delete(keyOrPrefix);
-  }
+  const tag = keyOrPrefix.endsWith('*') ? keyOrPrefix.slice(0, -1) : keyOrPrefix;
+  revalidateTag(tag, 'max');
 }

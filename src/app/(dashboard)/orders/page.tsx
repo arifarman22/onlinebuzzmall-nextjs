@@ -32,7 +32,7 @@ export default async function OrdersPage() {
         orderSet: { include: { platform: true } },
       },
       orderBy: { created_at: 'desc' },
-      take: 50,
+      take: 10,
     }),
   ]);
 

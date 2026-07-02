@@ -17,15 +17,11 @@ export default async function WalletPage() {
   const user = await db.user.findUnique({ where: { id: userId } });
   if (!user) redirect('/login');
 
-  const [totalDeposit, totalWithdraw, totalProfit, recentTx] = await Promise.all([
+  const [totalDeposit, totalWithdraw, totalProfit, recentTx, pendingDeposits, pendingWithdrawals] = await Promise.all([
     db.deposit.aggregate({ where: { user_id: userId, status: 1 }, _sum: { amount: true } }),
     db.withdrawal.aggregate({ where: { user_id: userId, status: 1 }, _sum: { amount: true } }),
     db.orderComplete.aggregate({ where: { user_id: userId, status: 1 }, _sum: { profit: true } }),
     db.transaction.findMany({ where: { user_id: userId }, orderBy: { created_at: 'desc' }, take: 10 }),
-  ]);
-
-  // Get pending deposits/withdrawals
-  const [pendingDeposits, pendingWithdrawals] = await Promise.all([
     db.deposit.findMany({ where: { user_id: userId, status: 2 }, orderBy: { created_at: 'desc' }, take: 5 }),
     db.withdrawal.findMany({ where: { user_id: userId, status: 2 }, orderBy: { created_at: 'desc' }, take: 5 }),
   ]);

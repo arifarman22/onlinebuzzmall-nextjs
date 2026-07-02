@@ -1,25 +1,53 @@
 import { getSessionUser } from '@/lib/session';
 import { db } from '@/lib/db';
+import { unstable_cache } from 'next/cache';
 import { formatAmount, formatDate } from '@/lib/utils';
 import Link from 'next/link';
+import Image from 'next/image';
 import {
   ArrowDownToLine, ArrowUpFromLine, User,
   Wallet, TrendingUp, Clock, Shield, CheckCircle,
-  ArrowRight, Eye, Crown, Lock, Calendar,
+  ArrowRight, Crown, Lock, Calendar,
 } from 'lucide-react';
 import PlatformRulesCards from '@/components/dashboard/PlatformRulesCards';
+
+const getPlatformRules = unstable_cache(
+  async () => {
+    const rows = await db.platformRules.findMany({
+      where: { status: 1 },
+      orderBy: { sort_order: 'asc' },
+      select: { id: true, title: true, description: true, content: true, image: true },
+    });
+    return rows.map((r) => ({
+      id: r.id,
+      title: r.title ?? '',
+      description: r.description ?? '',
+      content: r.content,
+      image: r.image,
+    }));
+  },
+  ['platform-rules'],
+  { revalidate: 300 }
+);
 
 export default async function DashboardPage() {
   const user0 = await getSessionUser();
   const userId = Number(user0?.id);
 
-  const user = await db.user.findUnique({ where: { id: userId }, include: { userExtra: true } });
+  const [user, rules] = await Promise.all([
+    db.user.findUnique({ where: { id: userId }, include: { userExtra: true } }),
+    getPlatformRules(),
+  ]);
   if (!user) return <div className="text-center py-20 text-slate-500">Please log in to view your dashboard.</div>;
 
   const [userRank, recentTx] = await Promise.all([
     user.rank_id > 0 ? db.userRankSetting.findFirst({ where: { id: user.rank_id } }) : Promise.resolve(null),
     db.transaction.findMany({ where: { user_id: userId }, orderBy: { created_at: 'desc' }, take: 5 }),
   ]);
+
+  const avatarSrc = user.image
+    ? (user.image.startsWith('http') || user.image.startsWith('/') ? user.image : `/${user.image}`)
+    : null;
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
@@ -58,8 +86,8 @@ export default async function DashboardPage() {
 
           {/* Profile Image - Right Corner */}
           <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl border-2 border-white/10 overflow-hidden bg-white/5 flex items-center justify-center shrink-0">
-            {user.image ? (
-              <img src={user.image.startsWith('http') || user.image.startsWith('/') ? user.image : `/${user.image}`} alt="" className="w-full h-full object-cover" />
+            {avatarSrc ? (
+              <Image src={avatarSrc} alt="" width={80} height={80} className="w-full h-full object-cover" />
             ) : (
               <User size={28} className="text-white/40" />
             )}
@@ -98,7 +126,7 @@ export default async function DashboardPage() {
       </div>
 
       {/* Platform Rules */}
-      <PlatformRulesCards />
+      <PlatformRulesCards rules={rules} />
 
       {/* Account Overview */}
       <div className="bg-slate-900 rounded-xl border border-slate-800 p-5">
