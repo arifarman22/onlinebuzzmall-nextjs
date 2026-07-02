@@ -26,36 +26,49 @@ export async function POST(req: NextRequest) {
   const { order_id } = parsed.data;
 
   try {
-    // FIX #1 (Critical): Entire financial operation wrapped in db.$transaction
-    // Prevents race condition where two simultaneous requests both pass balance check
-    await db.$transaction(async (tx) => {
-      // FIX #4 (High): Single query with ownership + status check — no info leak
-      const orderComplete = await tx.orderComplete.findFirst({
-        where: { id: order_id, user_id: userId, status: 0 },
-      });
-      if (!orderComplete) throw new Error('Order not found or already completed');
+    // Pre-fetch read-only data OUTSIDE the transaction to reduce queries inside it
+    // These don't need to be atomic — only the balance writes do
+    const [orderComplete, user] = await Promise.all([
+      db.orderComplete.findFirst({ where: { id: order_id, user_id: userId, status: 0 } }),
+      db.user.findUnique({ where: { id: userId } }),
+    ]);
 
-      const order = await tx.order.findUnique({
+    if (!orderComplete) throw new Error('Order not found or already completed');
+    if (!user) throw new Error('User not found');
+
+    const [order, orderDetails] = await Promise.all([
+      db.order.findUnique({
         where: { id: orderComplete.order_id },
         include: { platform: true, orderSet: { include: { platform: true } } },
-      });
-      if (!order) throw new Error('Order data not found');
+      }),
+      db.orderDetail.findMany({ where: { order_id: orderComplete.order_id } }),
+    ]);
 
-      const orderDetails = await tx.orderDetail.findMany({ where: { order_id: order.id } });
-      const totalPrice = orderDetails.reduce((sum, d) => sum + d.price * d.quantity, 0);
-      const profit = totalPrice * (order.profit / 100);
+    if (!order) throw new Error('Order data not found');
 
-      // Re-fetch user inside transaction for accurate balance
-      const user = await tx.user.findUnique({ where: { id: userId } });
-      if (!user) throw new Error('User not found');
+    const totalPrice = orderDetails.reduce((sum, d) => sum + d.price * d.quantity, 0);
+    const profit = totalPrice * (order.profit / 100);
 
-      const availableBalance = user.balance - user.freeze_amount;
-      if (availableBalance < totalPrice) {
-        const remaining = totalPrice - availableBalance;
+    // Balance check before entering transaction (early exit, saves a round trip)
+    const availableBalance = user.balance - user.freeze_amount;
+    if (availableBalance < totalPrice) {
+      const remaining = totalPrice - availableBalance;
+      throw new Error(`Insufficient balance. You need $${remaining.toFixed(2)} more.`);
+    }
+
+    // Atomic block: only the writes that MUST be atomic go here
+    // Re-check balance inside transaction to prevent race condition
+    // Timeout raised to 15s to handle TiDB Cloud remote latency
+    const finalBalance = await db.$transaction(async (tx) => {
+      const freshUser = await tx.user.findUnique({ where: { id: userId } });
+      if (!freshUser) throw new Error('User not found');
+
+      const freshAvailable = freshUser.balance - freshUser.freeze_amount;
+      if (freshAvailable < totalPrice) {
+        const remaining = totalPrice - freshAvailable;
         throw new Error(`Insufficient balance. You need $${remaining.toFixed(2)} more.`);
       }
 
-      // Deduct balance
       const afterDeduct = await tx.user.update({
         where: { id: userId },
         data: { balance: { decrement: totalPrice } },
@@ -69,7 +82,6 @@ export async function POST(req: NextRequest) {
         },
       });
 
-      // Credit balance + profit
       const finalUser = await tx.user.update({
         where: { id: userId },
         data: { balance: { increment: profit + totalPrice } },
@@ -83,30 +95,31 @@ export async function POST(req: NextRequest) {
         },
       });
 
-      // Mark order as completed
       await tx.orderComplete.update({
         where: { id: order_id },
         data: { profit, balance: finalUser.balance, end_at: new Date(), status: 1 },
       });
 
-      // Update order set progress
-      if (order.order_set_id) {
-        const orderSetAssign = await tx.orderSetAssign.findFirst({
-          where: { user_id: userId, order_set_id: order.order_set_id },
+      return finalUser.balance;
+    }, { timeout: 15000 });
+
+    // Update order set progress OUTSIDE transaction — not financial, doesn't need to be atomic
+    if (order.order_set_id) {
+      const orderSetAssign = await db.orderSetAssign.findFirst({
+        where: { user_id: userId, order_set_id: order.order_set_id },
+      });
+      if (orderSetAssign) {
+        const [totalOrdersInSet, completedInSet] = await Promise.all([
+          db.order.count({ where: { order_set_id: order.order_set_id } }),
+          db.orderComplete.count({ where: { user_id: userId, order_set_id: order.order_set_id, status: 1 } }),
+        ]);
+        const percent = totalOrdersInSet > 0 ? Math.min((completedInSet / totalOrdersInSet) * 100, 100) : 0;
+        await db.orderSetAssign.update({
+          where: { id: orderSetAssign.id },
+          data: { percentage_completed: percent },
         });
-        if (orderSetAssign) {
-          const totalOrdersInSet = await tx.order.count({ where: { order_set_id: order.order_set_id } });
-          const completedInSet = await tx.orderComplete.count({
-            where: { user_id: userId, order_set_id: order.order_set_id, status: 1 },
-          });
-          const percent = totalOrdersInSet > 0 ? Math.min((completedInSet / totalOrdersInSet) * 100, 100) : 0;
-          await tx.orderSetAssign.update({
-            where: { id: orderSetAssign.id },
-            data: { percentage_completed: percent },
-          });
-        }
       }
-    });
+    }
 
     return NextResponse.json({ success: true, message: 'Order completed successfully!' });
   } catch (error: any) {

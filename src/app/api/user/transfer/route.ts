@@ -67,7 +67,7 @@ export async function POST(req: NextRequest) {
       await tx.transaction.create({
         data: { user_id: toUser.id, amount, post_balance: recipient.balance, charge: 0, trx_type: '+', remark: 'balance_transfer', details: `Balance received from ${user.username}`, trx },
       });
-    });
+    }, { timeout: 15000 });
 
     return NextResponse.json({ success: true, message: 'Balance transferred successfully' });
   } catch (error: any) {

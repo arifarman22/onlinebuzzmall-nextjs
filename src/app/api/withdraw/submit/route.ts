@@ -69,7 +69,7 @@ export async function POST(req: NextRequest) {
           trx: generateTrx(), remark: 'withdraw',
         },
       });
-    });
+    }, { timeout: 15000 });
 
     sendAdminNotification({
       title: 'New Withdrawal Request',
