@@ -27,30 +27,34 @@ export default async function PlatformTasksPage({ params }: { params: Promise<{ 
   // Get completed orders for this set
   const completedOrders = await db.orderComplete.findMany({
     where: { user_id: userId, order_set_id: assignment.order_set_id },
-    select: { order_id: true, status: true, id: true, profit: true, created_at: true },
+    select: { order_id: true, status: true, id: true, profit: true, created_at: true, order_no: true },
   });
 
   const completedOrderIds = completedOrders.filter((c) => c.status === 1).map((c) => c.order_id);
   const pendingOrder = completedOrders.find((c) => c.status === 0);
 
-  // Today's & yesterday's commission
+  // Today's & yesterday's commission from ALL completed orders across all sets
   const now = new Date();
   const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const yesterdayStart = new Date(todayStart.getTime() - 86400000);
 
-  const todayCommission = completedOrders
-    .filter(c => c.status === 1 && c.created_at >= todayStart)
-    .reduce((s, c) => s + (c.profit || 0), 0);
+  const [todayOrders, yesterdayOrders, teamCommission] = await Promise.all([
+    db.orderComplete.aggregate({
+      where: { user_id: userId, status: 1, end_at: { gte: todayStart } },
+      _sum: { profit: true },
+    }),
+    db.orderComplete.aggregate({
+      where: { user_id: userId, status: 1, end_at: { gte: yesterdayStart, lt: todayStart } },
+      _sum: { profit: true },
+    }),
+    db.transaction.aggregate({
+      where: { user_id: userId, trx_type: '+', remark: { in: ['referral_commission', 'team_commission', 'bv_commission', 'ref_commission'] }, created_at: { gte: yesterdayStart, lt: todayStart } },
+      _sum: { amount: true },
+    }),
+  ]);
 
-  const yesterdayCommission = completedOrders
-    .filter(c => c.status === 1 && c.created_at >= yesterdayStart && c.created_at < todayStart)
-    .reduce((s, c) => s + (c.profit || 0), 0);
-
-  // Team commission (from transactions)
-  const teamCommission = await db.transaction.aggregate({
-    where: { user_id: userId, trx_type: { in: ['referral_commission', 'team_commission', 'bv_commission'] }, created_at: { gte: yesterdayStart, lt: todayStart } },
-    _sum: { amount: true },
-  });
+  const todayCommission = todayOrders._sum.profit || 0;
+  const yesterdayCommission = yesterdayOrders._sum.profit || 0;
 
   // Build task list
   const tasks = (assignment.orderSet?.orders || []).map((order, idx) => {
@@ -68,6 +72,7 @@ export default async function PlatformTasksPage({ params }: { params: Promise<{ 
     return {
       id: order.id,
       orderCompleteId: isPending ? pendingOrder.id : null,
+      orderNo: isPending ? (pendingOrder as any).order_no : null,
       index: idx + 1,
       type: order.type || 'single',
       price: totalPrice,
