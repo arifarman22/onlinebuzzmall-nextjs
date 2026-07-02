@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation';
+import { cookies } from 'next/headers';
 import { auth, signOut } from '@/lib/auth';
 import { getSessionUser } from '@/lib/session';
 import DashboardClient from '@/components/layout/DashboardClient';
@@ -16,15 +17,19 @@ export default async function DashboardLayout({ children }: { children: React.Re
     redirect('/login');
   }
 
-  // Check deleted via NextAuth session only
-  const session = await auth();
-  if ((session?.user as any)?.deleted) {
-    await signOut({ redirect: false });
-    redirect('/login?error=account_deleted');
-  }
+  // Check deleted via NextAuth session only (skip if impersonating)
+  const cookieStore = await cookies();
+  const isImpersonating = !!cookieStore.get('imp_token')?.value;
 
-  if ((session?.user as any)?.role === 'admin') {
-    redirect('/admin');
+  if (!isImpersonating) {
+    const session = await auth();
+    if ((session?.user as any)?.deleted) {
+      await signOut({ redirect: false });
+      redirect('/login?error=account_deleted');
+    }
+    if ((session?.user as any)?.role === 'admin') {
+      redirect('/admin');
+    }
   }
 
   const { logo, siteName } = await getBranding();
