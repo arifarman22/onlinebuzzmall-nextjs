@@ -14,6 +14,10 @@ const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif', 'ima
 const MAX_SIZE = 5 * 1024 * 1024;
 const ALLOWED_UPLOAD_TYPES = ['profile', 'kyc', 'gateway', 'deposit', 'platform-rules', 'product'];
 
+// FIX #11 (Low): Deposit/profile proofs restricted to images only — PDFs can contain embedded JS
+const IMAGE_ONLY_TYPES = ['profile', 'deposit', 'gateway'];
+const IMAGE_MIME_TYPES = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif', 'image/webp'];
+
 // Magic bytes for file type verification
 const MAGIC_BYTES: Record<string, number[][]> = {
   'image/jpeg': [[0xFF, 0xD8, 0xFF]],
@@ -51,7 +55,10 @@ export async function POST(req: NextRequest) {
     if (!type || !ALLOWED_UPLOAD_TYPES.includes(type)) return NextResponse.json({ success: false, message: 'Invalid upload type' }, { status: 400 });
     if (file.size > MAX_SIZE) return NextResponse.json({ success: false, message: 'File too large (max 5MB)' }, { status: 400 });
     if (file.size === 0) return NextResponse.json({ success: false, message: 'Empty file' }, { status: 400 });
-    if (!ALLOWED_TYPES.includes(file.type)) return NextResponse.json({ success: false, message: 'Invalid file type' }, { status: 400 });
+
+    // FIX #11: Restrict deposit/profile/gateway uploads to images only
+    const allowedMimes = IMAGE_ONLY_TYPES.includes(type) ? IMAGE_MIME_TYPES : ALLOWED_TYPES;
+    if (!allowedMimes.includes(file.type)) return NextResponse.json({ success: false, message: 'Invalid file type' }, { status: 400 });
 
     // Validate file extension matches MIME type
     const ext = file.name.split('.').pop()?.toLowerCase();

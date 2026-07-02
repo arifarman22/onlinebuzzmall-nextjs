@@ -1,10 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { generateTrx } from '@/lib/utils';
-import crypto from 'crypto';
+
+// CoinGate official callback IPs
+const COINGATE_IPS = ['52.28.107.115', '52.29.173.151', '52.58.230.219'];
 
 export async function POST(req: NextRequest) {
   try {
+    const clientIP = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+      req.headers.get('x-real-ip') || '';
+
+    // FIX #5 (High): IP check is now unconditional in production
+    // Previously only ran when callbackSecret was set — allowing bypass if env var missing
+    if (process.env.NODE_ENV === 'production' && !COINGATE_IPS.includes(clientIP)) {
+      console.error('CoinGate webhook: Unauthorized IP', clientIP.replace(/[\r\n\x00-\x1f]/g, ''));
+      return NextResponse.json({ error: 'Unauthorized IP' }, { status: 403 });
+    }
+
     const body = await req.text();
     const params = new URLSearchParams(body);
     const orderId = params.get('order_id');
@@ -13,27 +25,13 @@ export async function POST(req: NextRequest) {
 
     if (!orderId) return NextResponse.json({ error: 'Missing order_id' }, { status: 400 });
 
-    // Verify callback token if configured
+    // Verify callback token
     const callbackSecret = process.env.COINGATE_CALLBACK_SECRET;
-    if (callbackSecret) {
-      // CoinGate sends a token parameter that should match your configured callback token
-      if (token !== callbackSecret) {
-        console.error('CoinGate webhook: Invalid token');
-        return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
-      }
+    if (callbackSecret && token !== callbackSecret) {
+      console.error('CoinGate webhook: Invalid token');
+      return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }
 
-    // Also verify via IP whitelist (CoinGate IPs)
-    const allowedIPs = ['52.28.107.115', '52.29.173.151', '52.58.230.219'];
-    const clientIP = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
-      req.headers.get('x-real-ip') || '';
-    
-    if (process.env.NODE_ENV === 'production' && callbackSecret && !allowedIPs.includes(clientIP)) {
-      console.error('CoinGate webhook: Unauthorized IP', clientIP.replace(/[\r\n\x00-\x1f]/g, ''));
-      return NextResponse.json({ error: 'Unauthorized IP' }, { status: 403 });
-    }
-
-    // CoinGate statuses: new, pending, confirming, paid, invalid, expired, canceled
     if (status !== 'paid') {
       return NextResponse.json({ received: true });
     }
@@ -44,18 +42,16 @@ export async function POST(req: NextRequest) {
 
       await tx.deposit.update({ where: { id: deposit.id }, data: { status: 1 } });
 
-      await tx.user.update({
+      const updatedUser = await tx.user.update({
         where: { id: deposit.user_id },
         data: { balance: { increment: deposit.amount } },
       });
-
-      const user = await tx.user.findUnique({ where: { id: deposit.user_id } });
 
       await tx.transaction.create({
         data: {
           user_id: deposit.user_id,
           amount: deposit.amount,
-          post_balance: user!.balance,
+          post_balance: updatedUser.balance,
           charge: deposit.charge,
           trx_type: '+',
           details: 'Deposit via CoinGate (Crypto)',

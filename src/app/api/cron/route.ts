@@ -6,8 +6,14 @@ import { generateTrx } from '@/lib/utils';
 // GET /api/cron?secret=YOUR_CRON_SECRET
 
 export async function GET(req: NextRequest) {
-  const secret = req.nextUrl.searchParams.get('secret');
-  if (secret !== process.env.CRON_SECRET) {
+  // FIX #12 (Low): Accept secret via Authorization header OR query param
+  // Header is preferred (not logged by proxies), query param kept for cron-job.org compatibility
+  const authHeader = req.headers.get('authorization');
+  const headerSecret = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
+  const querySecret = req.nextUrl.searchParams.get('secret');
+  const secret = headerSecret || querySecret;
+
+  if (!secret || secret !== process.env.CRON_SECRET) {
     return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
   }
 

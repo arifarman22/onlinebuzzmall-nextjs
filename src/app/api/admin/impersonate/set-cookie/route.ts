@@ -2,6 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
 
 export async function POST(req: NextRequest) {
+  // FIX #8 (Medium): Verify request comes from our own origin to prevent CSRF
+  const origin = req.headers.get('origin') || '';
+  const appOrigin = (process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL || '').replace(/\/$/, '');
+  if (appOrigin && !origin.startsWith(appOrigin)) {
+    return NextResponse.json({ success: false, message: 'Forbidden' }, { status: 403 });
+  }
+
   const { token } = await req.json();
   if (!token || typeof token !== 'string') {
     return NextResponse.json({ success: false, message: 'Token required' }, { status: 400 });

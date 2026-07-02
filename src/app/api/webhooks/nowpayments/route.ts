@@ -7,9 +7,10 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
 
-    // Verify signature
+    // FIX #5 (High): Signature check is now unconditional in production
     const ipnSecret = process.env.NOWPAYMENTS_IPN_SECRET;
-    if (ipnSecret) {
+    if (process.env.NODE_ENV === 'production') {
+      if (!ipnSecret) return NextResponse.json({ error: 'Webhook not configured' }, { status: 500 });
       const sig = req.headers.get('x-nowpayments-sig');
       if (!sig) return NextResponse.json({ error: 'Missing signature' }, { status: 401 });
       const sortedBody = JSON.stringify(sortObject(body));

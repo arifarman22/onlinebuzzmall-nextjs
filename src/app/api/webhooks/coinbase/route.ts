@@ -8,9 +8,10 @@ export async function POST(req: NextRequest) {
     const body = await req.text();
     const sig = req.headers.get('x-cc-webhook-signature');
 
-    // Verify signature
+    // FIX #5 (High): Signature check is now unconditional in production
     const secret = process.env.COINBASE_WEBHOOK_SECRET;
-    if (secret) {
+    if (process.env.NODE_ENV === 'production') {
+      if (!secret) return NextResponse.json({ error: 'Webhook not configured' }, { status: 500 });
       if (!sig) return NextResponse.json({ error: 'Missing signature' }, { status: 401 });
       const hmac = crypto.createHmac('sha256', secret).update(body).digest('hex');
       if (sig !== hmac) {

@@ -131,6 +131,6 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ success: true, message: 'Deposit submitted. Awaiting approval.', data: { trx } });
   } catch (error: any) {
     console.error('Deposit POST error:', error);
-    return NextResponse.json({ success: false, message: error.message || 'Something went wrong', debug: String(error) }, { status: 500 });
+    return NextResponse.json({ success: false, message: error.message || 'Something went wrong' }, { status: 500 });
   }
 }

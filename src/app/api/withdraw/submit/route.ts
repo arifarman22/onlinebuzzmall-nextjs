@@ -28,9 +28,6 @@ export async function POST(req: NextRequest) {
   const { method_id, amount } = parsed.data;
 
   try {
-    const user = await db.user.findUnique({ where: { id: userId } });
-    if (!user) throw new Error('User not found');
-
     const method = await db.withdrawMethod.findUnique({ where: { id: method_id } });
     if (!method || method.status !== 1) throw new Error('Method not available');
 
@@ -40,31 +37,38 @@ export async function POST(req: NextRequest) {
 
     const charge = method.fixed_charge + (amount * method.percent_charge / 100);
     const afterCharge = amount - charge;
-    const availableBalance = user.balance - user.freeze_amount;
-
-    if (availableBalance < amount) throw new Error('Insufficient balance');
-
-    await db.user.update({ where: { id: userId }, data: { balance: { decrement: amount } } });
-
     const trx = generateTrx();
 
-    await db.withdrawal.create({
-      data: {
-        user_id: userId, method_id, amount,
-        currency: method.currency, rate: method.rate, charge,
-        final_amount: afterCharge * method.rate, after_charge: afterCharge,
-        trx, status: 2,
-      },
-    });
+    // FIX #2 (Critical): Entire financial operation in db.$transaction
+    // Re-fetch user inside transaction so balance check is atomic
+    await db.$transaction(async (tx) => {
+      const user = await tx.user.findUnique({ where: { id: userId } });
+      if (!user) throw new Error('User not found');
 
-    const updatedUser = await db.user.findUnique({ where: { id: userId } });
+      const availableBalance = user.balance - user.freeze_amount;
+      if (availableBalance < amount) throw new Error('Insufficient balance');
 
-    await db.transaction.create({
-      data: {
-        user_id: userId, amount, post_balance: updatedUser!.balance, charge,
-        trx_type: '-', details: `Withdraw via ${method.name}`,
-        trx: generateTrx(), remark: 'withdraw',
-      },
+      const updatedUser = await tx.user.update({
+        where: { id: userId },
+        data: { balance: { decrement: amount } },
+      });
+
+      await tx.withdrawal.create({
+        data: {
+          user_id: userId, method_id, amount,
+          currency: method.currency, rate: method.rate, charge,
+          final_amount: afterCharge * method.rate, after_charge: afterCharge,
+          trx, status: 2,
+        },
+      });
+
+      await tx.transaction.create({
+        data: {
+          user_id: userId, amount, post_balance: updatedUser.balance, charge,
+          trx_type: '-', details: `Withdraw via ${method.name}`,
+          trx: generateTrx(), remark: 'withdraw',
+        },
+      });
     });
 
     sendAdminNotification({

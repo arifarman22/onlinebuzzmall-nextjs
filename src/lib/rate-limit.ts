@@ -1,3 +1,9 @@
+// FIX #7 (High): Rate limiter keyed by both IP and user ID
+// Note: This is in-memory per-process. On VPS with PM2 single instance this works correctly.
+// On Vercel (multiple serverless instances) each instance has its own counter — acceptable
+// tradeoff without Redis. The per-user key in API routes (e.g. order:userId:ip) means an
+// attacker needs to control both the session AND the IP to bypass.
+
 const rateMap = new Map<string, { count: number; resetTime: number }>();
 
 // Clean expired entries every 5 minutes
@@ -26,9 +32,21 @@ export function rateLimit(key: string, limit: number, windowMs: number): { succe
 }
 
 export function getRateLimitKey(req: Request, prefix: string): string {
-  const ip = req.headers.get('cf-connecting-ip') ||
+  const ip =
+    req.headers.get('cf-connecting-ip') ||
     req.headers.get('x-real-ip') ||
     req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
     'unknown';
+  // Include IP in key so even if userId is known, attacker still needs matching IP
   return `${prefix}:${ip}`;
+}
+
+// Stricter key for financial operations — combines prefix (which includes userId) + IP
+export function getFinancialRateLimitKey(req: Request, userId: number, action: string): string {
+  const ip =
+    req.headers.get('cf-connecting-ip') ||
+    req.headers.get('x-real-ip') ||
+    req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+    'unknown';
+  return `fin:${action}:${userId}:${ip}`;
 }

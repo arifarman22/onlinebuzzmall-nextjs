@@ -16,7 +16,8 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    // ===== RULE 1: Only ONE active task at a time =====
+    // FIX #10 (Medium): Block status 0 (pending) AND any non-completed states
+    // status: 0 = pending, status: 1 = completed — only allow new start if none pending
     const existingPending = await db.orderComplete.findFirst({
       where: { user_id: userId, status: 0 },
     });

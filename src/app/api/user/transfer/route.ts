@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
   if (!session?.user?.id) return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
 
   const rlKey = getRateLimitKey(req, `transfer:${session.user.id}`);
-  const rl = rateLimit(rlKey, 5, 60 * 1000); // 5 per minute
+  const rl = rateLimit(rlKey, 5, 60 * 1000);
   if (!rl.success) {
     return NextResponse.json({ success: false, message: 'Too many requests' }, { status: 429 });
   }
@@ -28,12 +28,9 @@ export async function POST(req: NextRequest) {
     const settings = await db.generalSetting.findFirst();
     if (!settings?.balance_transfer) throw new Error('Balance transfer is disabled');
 
-    const user = await db.user.findUnique({ where: { id: userId } });
-    if (!user) throw new Error('User not found');
-
-    const toUser = await db.user.findFirst({ where: { username } });
-    if (!toUser) throw new Error('Recipient not found');
-    if (toUser.id === userId) throw new Error('Cannot transfer to yourself');
+    // FIX #13 (Low): resolve recipient before transaction but use generic error
+    const toUser = await db.user.findFirst({ where: { username, status: 1 } });
+    if (!toUser || toUser.id === userId) throw new Error('Invalid recipient');
 
     if (settings.balance_transfer_min && amount < settings.balance_transfer_min) {
       throw new Error(`Minimum transfer: $${settings.balance_transfer_min}`);
@@ -44,25 +41,32 @@ export async function POST(req: NextRequest) {
 
     const charge = (settings.balance_transfer_fixed_charge || 0) + (amount * (settings.balance_transfer_per_charge || 0) / 100);
     const totalDeduct = amount + charge;
-
-    if (user.balance < totalDeduct) throw new Error('Insufficient balance');
-
     const trx = generateTrx();
 
-    // Deduct from sender
-    await db.user.update({ where: { id: userId }, data: { balance: { decrement: totalDeduct } } });
-    const sender = await db.user.findUnique({ where: { id: userId } });
+    // FIX #3 (Critical): Entire financial operation in db.$transaction
+    // Re-fetch sender inside transaction so balance check is atomic
+    await db.$transaction(async (tx) => {
+      const user = await tx.user.findUnique({ where: { id: userId } });
+      if (!user) throw new Error('User not found');
+      if (user.balance < totalDeduct) throw new Error('Insufficient balance');
 
-    await db.transaction.create({
-      data: { user_id: userId, amount: totalDeduct, post_balance: sender!.balance, charge, trx_type: '-', remark: 'balance_transfer', details: `Balance transfer to ${toUser.username}`, trx },
-    });
+      const sender = await tx.user.update({
+        where: { id: userId },
+        data: { balance: { decrement: totalDeduct } },
+      });
 
-    // Credit recipient
-    await db.user.update({ where: { id: toUser.id }, data: { balance: { increment: amount } } });
-    const recipient = await db.user.findUnique({ where: { id: toUser.id } });
+      await tx.transaction.create({
+        data: { user_id: userId, amount: totalDeduct, post_balance: sender.balance, charge, trx_type: '-', remark: 'balance_transfer', details: `Balance transfer to ${toUser.username}`, trx },
+      });
 
-    await db.transaction.create({
-      data: { user_id: toUser.id, amount, post_balance: recipient!.balance, charge: 0, trx_type: '+', remark: 'balance_transfer', details: `Balance received from ${user.username}`, trx },
+      const recipient = await tx.user.update({
+        where: { id: toUser.id },
+        data: { balance: { increment: amount } },
+      });
+
+      await tx.transaction.create({
+        data: { user_id: toUser.id, amount, post_balance: recipient.balance, charge: 0, trx_type: '+', remark: 'balance_transfer', details: `Balance received from ${user.username}`, trx },
+      });
     });
 
     return NextResponse.json({ success: true, message: 'Balance transferred successfully' });
