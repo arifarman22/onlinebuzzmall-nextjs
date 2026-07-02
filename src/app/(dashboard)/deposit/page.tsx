@@ -23,6 +23,7 @@ export default function DepositPage() {
   const [msg, setMsg] = useState({ type: '', text: '' });
   const [copied, setCopied] = useState(false);
   const [step, setStep] = useState<Step>('form');
+  const [showSuccess, setShowSuccess] = useState(false);
 
   useEffect(() => {
     Promise.all([
@@ -101,14 +102,32 @@ export default function DepositPage() {
         body: JSON.stringify({ gateway_id: selected.id, amount: Number(amount), fields, proof_url: proofUrl }),
       });
       const d = await r.json();
-      setMsg({ type: d.success ? 'success' : 'error', text: d.message });
-      if (d.success) setTimeout(() => router.push('/wallet'), 2000);
+      if (d.success) { setShowSuccess(true); }
+      else setMsg({ type: 'error', text: d.message });
     } catch { setMsg({ type: 'error', text: 'Something went wrong' }); }
     setSubmitting(false);
   };
 
   const charge = selected && selected.show_charge ? selected.fixed_charge + (Number(amount || 0) * selected.percent_charge / 100) : 0;
   const total = selected ? (Number(amount || 0) + charge) * selected.exchange_rate : 0;
+
+  if (showSuccess) return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+      <div className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-xs p-8 flex flex-col items-center text-center shadow-2xl">
+        <div className="w-16 h-16 bg-emerald-500/10 rounded-full flex items-center justify-center mb-4">
+          <CheckCircle size={36} className="text-emerald-400" />
+        </div>
+        <h3 className="text-lg font-bold text-white mb-2">Deposit Submitted</h3>
+        <p className="text-sm text-slate-400 mb-6">Awaiting approval. We'll notify you once it's confirmed.</p>
+        <button
+          onClick={() => router.push('/wallet')}
+          className="w-full py-3 bg-emerald-600 text-white text-sm font-semibold rounded-xl hover:bg-emerald-700 transition-colors"
+        >
+          OK
+        </button>
+      </div>
+    </div>
+  );
 
   if (loading) return <div className="flex justify-center py-20"><div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" /></div>;
 
@@ -159,7 +178,7 @@ export default function DepositPage() {
         <div className="bg-slate-900 rounded-2xl border border-slate-800 p-5 space-y-5">
           {/* Gateway Dropdown */}
           <div>
-            <label className="block text-xs font-medium text-slate-300 mb-2">Payment Method</label>
+            <label className="block text-xs font-medium text-slate-300 mb-2">Payment Gateway</label>
             <div className="relative">
               <select
                 value={selected?.id || ''}
@@ -170,7 +189,7 @@ export default function DepositPage() {
                 className="w-full appearance-none px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-sm text-slate-200 outline-none focus:border-emerald-500 pr-10"
               >
                 {gateways.map(gw => (
-                  <option key={gw.id} value={gw.id}>{gw.name} ({gw.currency}) — Min: {gw.min_amount}, Max: {gw.max_amount}</option>
+                  <option key={gw.id} value={gw.id}>{gw.name}{gw.currency ? ` (${gw.currency})` : ''}</option>
                 ))}
               </select>
               <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
@@ -181,7 +200,7 @@ export default function DepositPage() {
           {selected && (
             <>
               <div>
-                <label className="block text-xs font-medium text-slate-300 mb-2">Amount ({selected.currency})</label>
+                <label className="block text-xs font-medium text-slate-300 mb-2">Amount</label>
                 <input
                   type="number"
                   step="0.01"
@@ -248,6 +267,16 @@ export default function DepositPage() {
 
       {/* STEP: Payment Info */}
       {step === 'payment' && selected && (
+        <>
+        <div className="bg-slate-900 rounded-2xl border border-slate-800 p-5 space-y-2 text-center">
+          <p className="text-base font-semibold text-slate-200">
+            You have requested <span className="text-emerald-400 font-bold">{Number(amount).toFixed(2)} {selected.currency}</span>.
+          </p>
+          <p className="text-base font-semibold text-slate-200">
+            Please pay <span className="text-emerald-400 font-bold">{total.toFixed(2)} {selected.currency}</span> for successful payment.
+          </p>
+          <p className="text-base font-semibold text-slate-200">(Please follow the instructions below)</p>
+        </div>
         <div className="bg-slate-900 rounded-2xl border border-slate-800 p-5 space-y-5">
           <div className="text-center">
             <p className="text-xs text-slate-500 mb-1">Send Exactly</p>
@@ -284,9 +313,10 @@ export default function DepositPage() {
           )}
 
           <button onClick={goToProof} className="w-full py-3.5 bg-emerald-600 text-white font-semibold rounded-xl hover:bg-emerald-700 transition-colors flex items-center justify-center gap-2">
-            <CheckCircle size={16} /> I Have Paid
+            <CheckCircle size={16} /> Pay Now
           </button>
         </div>
+        </>
       )}
 
       {/* STEP: Proof & Submit */}

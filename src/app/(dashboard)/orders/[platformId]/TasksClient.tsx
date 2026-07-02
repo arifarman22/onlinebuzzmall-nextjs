@@ -236,7 +236,7 @@ function ActiveTaskCard({ task, platformId, userBalance, freezeAmount }: {
             <button
               onClick={() => canAfford ? setShowConfirm(true) : null}
               disabled={loading || !canAfford}
-              className="w-full flex items-center justify-center gap-2 py-3.5 bg-indigo-600 text-white text-sm font-semibold rounded-xl hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+              className={`w-full flex items-center justify-center gap-2 py-3.5 text-white text-sm font-semibold rounded-xl disabled:opacity-50 transition-colors ${!canAfford ? 'bg-gradient-to-br from-indigo-600 to-purple-700' : 'bg-indigo-600 hover:bg-indigo-700'}`}
             >
               {loading ? <Loader2 size={15} className="animate-spin" /> : <ShoppingCart size={15} />}
               {loading ? 'Processing...' : !canAfford ? `Need ${formatAmount(task.price - availableBalance)} more` : 'Grab the Order Immediately'}
