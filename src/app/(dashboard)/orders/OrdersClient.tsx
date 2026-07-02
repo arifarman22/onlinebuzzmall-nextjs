@@ -148,12 +148,19 @@ export default function OrdersClient({ user, platforms, assignments, stats }: Pr
 
                 {hasAssignment && (
                   <div className="mb-4">
-                    <div className="flex items-center justify-between text-xs text-slate-500 mb-1.5">
+                    <div className="flex items-center justify-between text-xs text-slate-500 mb-2">
                       <span>Progress</span>
                       <span className="font-medium text-slate-300">{completedPct.toFixed(0)}%</span>
                     </div>
-                    <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
-                      <div className="h-full bg-emerald-500 rounded-full transition-all" style={{ width: `${Math.min(completedPct, 100)}%` }} />
+                    <div className="flex gap-1.5">
+                      {Array.from({ length: 10 }).map((_, i) => (
+                        <div
+                          key={i}
+                          className={`flex-1 h-2 rounded-full transition-all ${
+                            i < Math.round(completedPct / 10) ? 'bg-emerald-500' : 'bg-slate-700'
+                          }`}
+                        />
+                      ))}
                     </div>
                   </div>
                 )}

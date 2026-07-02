@@ -111,21 +111,6 @@ export default function TasksClient({ platform, tasks, userBalance, freezeAmount
         <p className="text-xs text-amber-700 leading-relaxed mt-1">2: The system sends tasks randomly. Complete them as soon as possible after matching them to avoid delays.</p>
       </div>
 
-      {/* Completed Tasks */}
-      {completedCount > 0 && (
-        <div className="space-y-2">
-          <p className="text-xs font-medium text-gray-400 px-1">Completed ({completedCount})</p>
-          {tasks.filter(t => t.status === 'completed').map(task => (
-            <div key={task.id} className="bg-emerald-50/50 rounded-xl border border-emerald-200 p-3 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <CheckCircle size={14} className="text-emerald-600" />
-                <span className="text-xs font-medium text-gray-700">Task #{task.index}</span>
-              </div>
-              <span className="text-xs font-semibold text-emerald-600">+{formatAmount(task.profit)}</span>
-            </div>
-          ))}
-        </div>
-      )}
     </div>
   );
 }
