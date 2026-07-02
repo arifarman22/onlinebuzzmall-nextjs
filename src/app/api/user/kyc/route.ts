@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@/lib/auth';
+import { getApiUserId } from '@/lib/api-auth';
 import { db } from '@/lib/db';
 import { rateLimit, getRateLimitKey } from '@/lib/rate-limit';
 
@@ -15,14 +15,13 @@ const DEFAULT_KYC_FIELDS = [
 ];
 
 export async function POST(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user?.id) return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
+  const userId = await getApiUserId(req);
+  if (!userId) return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
 
-  const rlKey = getRateLimitKey(req, `kyc:${session.user.id}`);
+  const rlKey = getRateLimitKey(req, `kyc:${userId}`);
   const rl = rateLimit(rlKey, 3, 60 * 1000);
   if (!rl.success) return NextResponse.json({ success: false, message: 'Too many attempts' }, { status: 429 });
 
-  const userId = Number(session.user.id);
   const user = await db.user.findUnique({ where: { id: userId } });
   if (!user) return NextResponse.json({ success: false, message: 'User not found' }, { status: 404 });
 

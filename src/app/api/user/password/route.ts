@@ -1,23 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@/lib/auth';
+import { getApiUserId } from '@/lib/api-auth';
 import { db } from '@/lib/db';
 import { passwordChangeSchema } from '@/lib/validations';
 import { rateLimit, getRateLimitKey } from '@/lib/rate-limit';
 import bcrypt from 'bcryptjs';
 
 export async function PUT(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user?.id) {
+  const userId = await getApiUserId(req);
+  if (!userId) {
     return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
   }
 
-  const rlKey = getRateLimitKey(req, `password:${session.user.id}`);
-  const rl = rateLimit(rlKey, 5, 15 * 60 * 1000); // 5 per 15 min
+  const rlKey = getRateLimitKey(req, `password:${userId}`);
+  const rl = rateLimit(rlKey, 5, 15 * 60 * 1000);
   if (!rl.success) {
     return NextResponse.json({ success: false, message: 'Too many attempts' }, { status: 429 });
   }
-
-  const userId = Number(session.user.id);
   const body = await req.json();
   const parsed = passwordChangeSchema.safeParse(body);
   if (!parsed.success) {

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@/lib/auth';
+import { getApiUserId } from '@/lib/api-auth';
 import { db } from '@/lib/db';
 import * as OTPAuth from 'otpauth';
 import { twofactorSchema } from '@/lib/validations';
@@ -16,11 +16,10 @@ function createTOTP(secret: string, username: string) {
   });
 }
 
-export async function GET() {
-  const session = await auth();
-  if (!session?.user?.id) return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
+export async function GET(req: NextRequest) {
+  const userId = await getApiUserId(req);
+  if (!userId) return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
 
-  const userId = Number(session.user.id);
   const user = await db.user.findUnique({ where: { id: userId } });
   if (!user) return NextResponse.json({ success: false, message: 'User not found' }, { status: 404 });
 
@@ -45,16 +44,15 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user?.id) return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
+  const userId = await getApiUserId(req);
+  if (!userId) return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
 
-  const rlKey = getRateLimitKey(req, `2fa:${session.user.id}`);
+  const rlKey = getRateLimitKey(req, `2fa:${userId}`);
   const rl = rateLimit(rlKey, 10, 5 * 60 * 1000);
   if (!rl.success) {
     return NextResponse.json({ success: false, message: 'Too many attempts' }, { status: 429 });
   }
 
-  const userId = Number(session.user.id);
   const user = await db.user.findUnique({ where: { id: userId } });
   if (!user) return NextResponse.json({ success: false, message: 'User not found' }, { status: 404 });
 

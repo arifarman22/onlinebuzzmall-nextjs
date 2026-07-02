@@ -1,5 +1,5 @@
-import { NextResponse } from 'next/server';
-import { auth } from '@/lib/auth';
+import { NextRequest, NextResponse } from 'next/server';
+import { getApiUserId } from '@/lib/api-auth';
 import { db } from '@/lib/db';
 
 const DEFAULT_KYC_FIELDS = [
@@ -12,9 +12,9 @@ const DEFAULT_KYC_FIELDS = [
   { key: 'address', label: 'Residential Address', type: 'textarea', options: '', enabled: 1, required: 0, sort: 7 },
 ];
 
-export async function GET() {
-  const session = await auth();
-  if (!session?.user?.id) return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
+export async function GET(req: NextRequest) {
+  const userId = await getApiUserId(req);
+  if (!userId) return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
 
   const setting = await db.siteSetting.findUnique({ where: { key: 'kyc_fields' } });
   let fields = DEFAULT_KYC_FIELDS;
