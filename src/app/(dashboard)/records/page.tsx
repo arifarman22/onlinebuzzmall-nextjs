@@ -1,12 +1,12 @@
-import { auth } from '@/lib/auth';
+import { getSessionUser } from '@/lib/session';
 import { db } from '@/lib/db';
 import { redirect } from 'next/navigation';
 import RecordsClient from './RecordsClient';
 
 export default async function RecordsPage() {
-  const session = await auth();
-  if (!session?.user?.id) redirect('/login');
-  const userId = Number(session.user.id);
+  const user0 = await getSessionUser();
+  if (!user0?.id) redirect('/login');
+  const userId = Number(user0.id);
 
   const [orderHistory, transactions] = await Promise.all([
     db.orderComplete.findMany({

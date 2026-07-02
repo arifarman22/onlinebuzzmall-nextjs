@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 import { auth, signOut } from '@/lib/auth';
+import { getSessionUser } from '@/lib/session';
 import DashboardClient from '@/components/layout/DashboardClient';
 import ImpersonationBanner from '@/components/ImpersonationBanner';
 import NotificationBell from '@/components/dashboard/NotificationBell';
@@ -9,18 +10,20 @@ import BackButton from '@/components/dashboard/BackButton';
 import { getBranding } from '@/lib/branding';
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const session = await auth();
+  const user = await getSessionUser();
 
-  if (!session?.user) {
+  if (!user) {
     redirect('/login');
   }
 
-  if ((session.user as any).deleted) {
+  // Check deleted via NextAuth session only
+  const session = await auth();
+  if ((session?.user as any)?.deleted) {
     await signOut({ redirect: false });
     redirect('/login?error=account_deleted');
   }
 
-  if ((session.user as any).role === 'admin') {
+  if ((session?.user as any)?.role === 'admin') {
     redirect('/admin');
   }
 

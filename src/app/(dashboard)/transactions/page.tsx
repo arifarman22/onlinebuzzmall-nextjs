@@ -1,4 +1,4 @@
-import { auth } from '@/lib/auth';
+import { getSessionUser } from '@/lib/session';
 import { db } from '@/lib/db';
 import { formatAmount, formatDateTime } from '@/lib/utils';
 import { ArrowDownToLine, ArrowUpFromLine } from 'lucide-react';
@@ -6,8 +6,8 @@ import { ArrowDownToLine, ArrowUpFromLine } from 'lucide-react';
 const PER_PAGE = 30;
 
 export default async function TransactionsPage({ searchParams }: { searchParams: Promise<{ page?: string }> }) {
-  const session = await auth();
-  const userId = Number(session?.user?.id);
+  const user0 = await getSessionUser();
+  const userId = Number(user0?.id);
   const params = await searchParams;
   const page = Number(params.page) || 1;
 

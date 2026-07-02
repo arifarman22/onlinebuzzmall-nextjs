@@ -1,4 +1,4 @@
-import { auth } from '@/lib/auth';
+import { getSessionUser } from '@/lib/session';
 import { db } from '@/lib/db';
 import { formatAmount, formatDate } from '@/lib/utils';
 import { redirect } from 'next/navigation';
@@ -10,9 +10,9 @@ import {
 import WalletActions from '@/components/dashboard/WalletActions';
 
 export default async function WalletPage() {
-  const session = await auth();
-  if (!session?.user?.id) redirect('/login');
-  const userId = Number(session.user.id);
+  const user0 = await getSessionUser();
+  if (!user0?.id) redirect('/login');
+  const userId = Number(user0.id);
 
   const user = await db.user.findUnique({ where: { id: userId } });
   if (!user) redirect('/login');

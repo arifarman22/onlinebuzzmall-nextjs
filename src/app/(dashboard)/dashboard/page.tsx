@@ -1,4 +1,4 @@
-import { auth } from '@/lib/auth';
+import { getSessionUser } from '@/lib/session';
 import { db } from '@/lib/db';
 import { formatAmount, formatDate } from '@/lib/utils';
 import Link from 'next/link';
@@ -10,8 +10,8 @@ import {
 import PlatformRulesCards from '@/components/dashboard/PlatformRulesCards';
 
 export default async function DashboardPage() {
-  const session = await auth();
-  const userId = Number(session?.user?.id);
+  const user0 = await getSessionUser();
+  const userId = Number(user0?.id);
 
   const user = await db.user.findUnique({ where: { id: userId }, include: { userExtra: true } });
   if (!user) return <div className="text-center py-20 text-slate-500">Please log in to view your dashboard.</div>;

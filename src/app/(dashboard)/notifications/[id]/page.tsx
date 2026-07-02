@@ -1,4 +1,4 @@
-import { auth } from '@/lib/auth';
+import { getSessionUser } from '@/lib/session';
 import { db } from '@/lib/db';
 import { notFound } from 'next/navigation';
 import { Bell, ArrowRight, CheckCircle } from 'lucide-react';
@@ -17,7 +17,6 @@ function cleanMessage(msg: string | null): string {
 function parseLink(type: string | null): string | null {
   if (!type) return null;
   const parts = type.split('|');
-  // format: system|userLink|adminLink — return userLink
   return parts[1] || null;
 }
 
@@ -32,15 +31,15 @@ function getLinkLabel(link: string): string {
 }
 
 export default async function NotificationDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const session = await auth();
-  if (!session?.user?.id) return null;
+  const user0 = await getSessionUser();
+  if (!user0?.id) return null;
 
   const { id } = await params;
   const notification = await db.notificationLog.findUnique({
     where: { id: Number(id) },
   });
 
-  if (!notification || notification.user_id !== Number(session.user.id)) notFound();
+  if (!notification || notification.user_id !== Number(user0.id)) notFound();
 
   // Mark as read
   if (notification.is_read === 0) {

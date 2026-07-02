@@ -1,15 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@/lib/auth';
+import { getApiUserId } from '@/lib/api-auth';
 import { db } from '@/lib/db';
 import { generateOrderNo } from '@/lib/utils';
 
 export async function POST(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user?.id) {
+  const userId = await getApiUserId(req);
+  if (!userId) {
     return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
   }
-
-  const userId = Number(session.user.id);
   const body = await req.json();
   const { platform_id } = body;
 

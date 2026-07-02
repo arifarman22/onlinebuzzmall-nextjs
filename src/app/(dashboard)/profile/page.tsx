@@ -1,4 +1,4 @@
-import { auth } from '@/lib/auth';
+import { getSessionUser } from '@/lib/session';
 import { db } from '@/lib/db';
 import { formatDate } from '@/lib/utils';
 import {
@@ -11,8 +11,8 @@ import ProfileAvatarUpload from '@/components/dashboard/ProfileAvatarUpload';
 import CopyButton from '@/components/dashboard/CopyButton';
 
 export default async function ProfilePage() {
-  const session = await auth();
-  const userId = Number(session?.user?.id);
+  const user0 = await getSessionUser();
+  const userId = Number(user0?.id);
 
   const user = await db.user.findUnique({ where: { id: userId } });
   if (!user) return null;

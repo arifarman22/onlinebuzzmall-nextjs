@@ -1,4 +1,4 @@
-import { auth } from '@/lib/auth';
+import { getSessionUser } from '@/lib/session';
 import { db } from '@/lib/db';
 import { formatAmount, formatDate } from '@/lib/utils';
 import Badge from '@/components/ui/Badge';
@@ -6,8 +6,8 @@ import WithdrawForm from '@/components/dashboard/WithdrawForm';
 import { Wallet, ArrowUpFromLine } from 'lucide-react';
 
 export default async function WithdrawPage() {
-  const session = await auth();
-  const userId = Number(session?.user?.id);
+  const user0 = await getSessionUser();
+  const userId = Number(user0?.id);
 
   const user = await db.user.findUnique({ where: { id: userId } });
   if (!user) return null;

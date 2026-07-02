@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@/lib/auth';
+import { getApiUserId } from '@/lib/api-auth';
 import { db } from '@/lib/db';
 import { generateTrx } from '@/lib/utils';
 import { rateLimit, getRateLimitKey } from '@/lib/rate-limit';
 import { sendAdminNotification } from '@/lib/notifications';
 
-// GET: List active gateways with only visible fields
 export async function GET() {
+  const { auth } = await import('@/lib/auth');
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
 
@@ -49,17 +49,14 @@ export async function GET() {
   return NextResponse.json({ success: true, data });
 }
 
-// POST: Submit deposit
 export async function POST(req: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
+    const userId = await getApiUserId(req);
+    if (!userId) return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
 
-  const rlKey = getRateLimitKey(req, `gw-deposit:${session.user.id}`);
+  const rlKey = getRateLimitKey(req, `gw-deposit:${userId}`);
   const rl = rateLimit(rlKey, 5, 60 * 1000);
   if (!rl.success) return NextResponse.json({ success: false, message: 'Too many requests' }, { status: 429 });
-
-  const userId = Number(session.user.id);
   const body = await req.json();
   const { gateway_id, amount, fields: submittedFields, proof_url } = body;
 

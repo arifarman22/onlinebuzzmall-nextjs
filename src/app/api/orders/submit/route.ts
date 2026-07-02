@@ -1,23 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@/lib/auth';
+import { getApiUserId } from '@/lib/api-auth';
 import { db } from '@/lib/db';
 import { generateTrx, generateOrderNo } from '@/lib/utils';
 import { orderSubmitSchema } from '@/lib/validations';
 import { rateLimit, getRateLimitKey } from '@/lib/rate-limit';
 
 export async function POST(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user?.id) {
+  const userId = await getApiUserId(req);
+  if (!userId) {
     return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
   }
 
-  const rlKey = getRateLimitKey(req, `order:${session.user.id}`);
+  const rlKey = getRateLimitKey(req, `order:${userId}`);
   const rl = rateLimit(rlKey, 30, 60 * 1000);
   if (!rl.success) {
     return NextResponse.json({ success: false, message: 'Too many requests' }, { status: 429 });
   }
-
-  const userId = Number(session.user.id);
   const body = await req.json();
   const parsed = orderSubmitSchema.safeParse(body);
   if (!parsed.success) {

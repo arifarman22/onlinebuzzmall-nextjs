@@ -1,12 +1,12 @@
-import { auth } from '@/lib/auth';
+import { getSessionUser } from '@/lib/session';
 import { db } from '@/lib/db';
 import { DarkCard as Card, DarkCardContent as CardContent, DarkCardHeader as CardHeader } from '@/components/ui/DarkCard';
 import { formatAmount, formatDate } from '@/lib/utils';
 import CopyButton from '@/components/dashboard/CopyButton';
 
 export default async function InvitePage() {
-  const session = await auth();
-  const userId = Number(session?.user?.id);
+  const user0 = await getSessionUser();
+  const userId = Number(user0?.id);
 
   const user = await db.user.findUnique({ where: { id: userId } });
   if (!user) return null;

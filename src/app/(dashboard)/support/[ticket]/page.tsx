@@ -1,4 +1,4 @@
-import { auth } from '@/lib/auth';
+import { getSessionUser } from '@/lib/session';
 import { db } from '@/lib/db';
 import { notFound } from 'next/navigation';
 import { Card, CardContent, CardHeader } from '@/components/ui/Card';
@@ -7,8 +7,8 @@ import Badge from '@/components/ui/Badge';
 import TicketReplyForm from '@/components/dashboard/TicketReplyForm';
 
 export default async function TicketDetailPage({ params }: { params: { ticket: string } }) {
-  const session = await auth();
-  const userId = Number(session?.user?.id);
+  const user0 = await getSessionUser();
+  const userId = Number(user0?.id);
 
   const ticket = await db.supportTicket.findFirst({
     where: { ticket: params.ticket, user_id: userId },

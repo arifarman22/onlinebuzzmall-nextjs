@@ -1,28 +1,36 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { securityMiddleware, addSecurityHeaders } from '@/lib/security';
+import jwt from 'jsonwebtoken';
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  // Skip security checks for NextAuth internal routes and impersonation
   if (pathname.startsWith('/api/auth') || pathname.startsWith('/impersonate')) {
     return NextResponse.next();
   }
 
-  // ===== SECURITY CHECKS (runs on all routes) =====
   const securityBlock = securityMiddleware(req);
   if (securityBlock) return securityBlock;
 
-  // ===== AUTH SESSION CHECK =====
   const sessionToken = req.cookies.get('authjs.session-token')?.value ||
     req.cookies.get('__Secure-authjs.session-token')?.value;
-  const isLoggedIn = !!sessionToken;
+  const impToken = req.cookies.get('imp_token')?.value;
 
-  // Protect user dashboard routes
+  // Validate imp_token if present
+  let impValid = false;
+  if (impToken && process.env.NEXTAUTH_SECRET) {
+    try {
+      const decoded = jwt.verify(impToken, process.env.NEXTAUTH_SECRET) as any;
+      if (decoded.type === 'impersonate') impValid = true;
+    } catch {}
+  }
+
+  const isLoggedIn = !!sessionToken || impValid;
+
   const protectedPaths = ['/dashboard', '/orders', '/deposit', '/withdraw',
     '/transactions', '/invite', '/profile', '/plan', '/transfer',
-    '/kyc', '/support', '/tree', '/twofactor'];
+    '/kyc', '/support', '/tree', '/twofactor', '/records'];
 
   if (protectedPaths.some((p) => pathname.startsWith(p))) {
     if (!isLoggedIn) {
@@ -30,23 +38,17 @@ export async function middleware(req: NextRequest) {
     }
   }
 
-  // Protect admin routes (except login)
+  // Protect admin routes — imp_token does NOT grant admin access
   if (pathname.startsWith('/admin') && !pathname.startsWith('/admin/login')) {
-    if (!isLoggedIn) {
+    if (!sessionToken) {
       return addSecurityHeaders(NextResponse.redirect(new URL('/admin/login', req.nextUrl.origin)));
     }
   }
 
-  // Admin login page - pass through
   if (pathname === '/admin/login') {
     return addSecurityHeaders(NextResponse.next());
   }
 
-  // Redirect logged-in regular users from auth pages
-  // Note: Don't redirect here - let the page handle it, since middleware can't determine user role
-  // The login/register pages will redirect appropriately if needed
-
-  // ===== ADD SECURITY HEADERS TO RESPONSE =====
   const response = NextResponse.next();
   return addSecurityHeaders(response);
 }

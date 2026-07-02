@@ -1,4 +1,4 @@
-import { auth } from '@/lib/auth';
+import { getSessionUser } from '@/lib/session';
 import { db } from '@/lib/db';
 import Link from 'next/link';
 import { Bell, Circle } from 'lucide-react';
@@ -14,11 +14,11 @@ function cleanMessage(msg: string | null): string {
 }
 
 export default async function NotificationsPage() {
-  const session = await auth();
-  if (!session?.user?.id) return null;
+  const user0 = await getSessionUser();
+  if (!user0?.id) return null;
 
   const notifications = await db.notificationLog.findMany({
-    where: { user_id: Number(session.user.id) },
+    where: { user_id: Number(user0.id) },
     orderBy: { created_at: 'desc' },
     take: 50,
   });

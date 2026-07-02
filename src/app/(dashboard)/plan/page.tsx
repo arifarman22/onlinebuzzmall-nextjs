@@ -1,12 +1,12 @@
-import { auth } from '@/lib/auth';
+import { getSessionUser } from '@/lib/session';
 import { db } from '@/lib/db';
 import { Card, CardContent } from '@/components/ui/Card';
 import { formatAmount } from '@/lib/utils';
 import PlanPurchaseButton from '@/components/dashboard/PlanPurchaseButton';
 
 export default async function PlanPage() {
-  const session = await auth();
-  const userId = Number(session?.user?.id);
+  const user0 = await getSessionUser();
+  const userId = Number(user0?.id);
   const user = await db.user.findUnique({ where: { id: userId } });
   const plans = await db.plan.findMany({ where: { status: 1 }, orderBy: { price: 'asc' } });
 

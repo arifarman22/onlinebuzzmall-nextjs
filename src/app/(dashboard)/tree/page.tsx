@@ -1,11 +1,11 @@
-import { auth } from '@/lib/auth';
+import { getSessionUser } from '@/lib/session';
 import { db } from '@/lib/db';
 import { Card, CardContent, CardHeader } from '@/components/ui/Card';
 import TreeView from '@/components/dashboard/TreeView';
 
 export default async function TreePage() {
-  const session = await auth();
-  const userId = Number(session?.user?.id);
+  const user0 = await getSessionUser();
+  const userId = Number(user0?.id);
 
   const user = await db.user.findUnique({ where: { id: userId } });
   if (!user) return null;

@@ -1,12 +1,12 @@
-import { auth } from '@/lib/auth';
+import { getSessionUser } from '@/lib/session';
 import { db } from '@/lib/db';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Shield, CheckCircle, Clock, XCircle, AlertTriangle } from 'lucide-react';
 import KycForm from '@/components/dashboard/KycForm';
 
 export default async function KycPage() {
-  const session = await auth();
-  const userId = Number(session?.user?.id);
+  const user0 = await getSessionUser();
+  const userId = Number(user0?.id);
   const user = await db.user.findUnique({ where: { id: userId } });
   if (!user) return null;
 
