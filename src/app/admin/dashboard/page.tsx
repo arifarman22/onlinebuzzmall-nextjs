@@ -186,14 +186,14 @@ export default async function AdminDashboardPage() {
           <StatCard
             label="Pending Deposits"
             value={pendingDeposits}
-            href="/admin/deposits?status=pending"
+            href="/admin/deposits?filter=pending"
             gradient="linear-gradient(135deg, #f59e0b 0%, #b45309 100%)"
             icon={<Clock size={22} className="text-white" />}
           />
           <StatCard
             label="Rejected Deposits"
             value={rejectedDeposits}
-            href="/admin/deposits?status=rejected"
+            href="/admin/deposits?filter=rejected"
             gradient="linear-gradient(135deg, #ef4444 0%, #b91c1c 100%)"
             icon={<XCircle size={22} className="text-white" />}
           />

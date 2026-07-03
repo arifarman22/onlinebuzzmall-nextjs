@@ -26,7 +26,10 @@ export default async function AdminDepositsPage({ searchParams }: { searchParams
     default: break;
   }
 
-  if (statusFilter) where.status = Number(statusFilter);
+  if (statusFilter) {
+    const statusNum = Number(statusFilter);
+    if (!isNaN(statusNum)) where.status = statusNum;
+  }
   if (search) {
     const searchId = Number(search);
     if (searchId > 0) {
