@@ -73,7 +73,6 @@ export default function AdminSidebar({ mobileOpen, onClose, roleSlug = 'super-ad
     { href: '/admin/products', label: 'Products', icon: Package },
     { href: '/admin/platforms', label: 'Platforms', icon: Layers },
     { href: '/admin/platform-rules', label: 'Platform Rules', icon: BookOpen },
-    { href: '/admin/plans', label: 'Plans', icon: Package },
     {
       label: 'Withdrawals', icon: ArrowUpFromLine,
       submenu: [
