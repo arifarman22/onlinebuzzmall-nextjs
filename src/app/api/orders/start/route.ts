@@ -27,8 +27,9 @@ export async function POST(req: NextRequest) {
 
     // ===== Find user's assignment for this platform =====
     const assignment = await db.orderSetAssign.findFirst({
-      where: { user_id: userId, orderSet: { platform_id } },
+      where: { user_id: userId, orderSet: { platform_id }, percentage_completed: { lt: 100 } },
       include: { orderSet: { include: { platform: true } } },
+      orderBy: { id: 'asc' },
     });
 
     if (!assignment) {

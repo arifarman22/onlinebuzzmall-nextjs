@@ -16,13 +16,26 @@ export default async function PlatformTasksPage({ params }: { params: Promise<{ 
   const platform = await db.platform.findUnique({ where: { id: platId } });
   if (!platform) redirect('/orders');
 
-  // Get user's assignment for this platform
-  const assignment = await db.orderSetAssign.findFirst({
+  // Get all assignments for this platform, pick the first incomplete one
+  const allAssignments = await db.orderSetAssign.findMany({
     where: { user_id: userId, orderSet: { platform_id: platId } },
     include: { orderSet: { include: { orders: { orderBy: { id: 'asc' }, include: { orderDetails: { include: { product: true } } } } } } },
+    orderBy: { id: 'asc' },
   });
 
-  if (!assignment) redirect('/orders');
+  if (!allAssignments.length) redirect('/orders');
+
+  // Check for any globally pending order (across all sets) — needed to match start API logic
+  const globalPending = await db.orderComplete.findFirst({
+    where: { user_id: userId, status: 0 },
+    select: { order_id: true, id: true, order_no: true, order_set_id: true },
+  });
+
+  // Pick assignment: prefer the one with the pending order, else first incomplete
+  const assignment =
+    allAssignments.find((a) => a.order_set_id === globalPending?.order_set_id) ||
+    allAssignments.find((a) => a.percentage_completed < 100) ||
+    allAssignments[0];
 
   // Get completed orders for this set
   const completedOrders = await db.orderComplete.findMany({

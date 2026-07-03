@@ -190,7 +190,7 @@ model Platform {
   currency           String     @default("USDT")
   description        String?    @db.Text
   featured           Int        @default(0)
-  max_orders_per_day Int        @default(40)
+  max_orders_per_day Int        @default(25)
   min_orders         Int        @default(0)
   show_on_dashboard  Int        @default(1)
   slug               String?    @unique
