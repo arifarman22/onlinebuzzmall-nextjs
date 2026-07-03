@@ -6,17 +6,18 @@ interface NotifyParams {
   templateName: string;
   variables?: Record<string, string>;
   title?: string;
-  link?: string;      // user-side navigation link
-  adminLink?: string; // admin-side navigation link
+  message?: string;  // override computed message
+  link?: string;
+  adminLink?: string;
 }
 
-export function sendNotification({ userId, templateName, variables = {}, title, link, adminLink }: NotifyParams) {
-  _sendNotificationAsync({ userId, templateName, variables, title, link, adminLink }).catch(err =>
+export function sendNotification({ userId, templateName, variables = {}, title, message, link, adminLink }: NotifyParams) {
+  _sendNotificationAsync({ userId, templateName, variables, title, message, link, adminLink }).catch(err =>
     console.error('sendNotification error:', err)
   );
 }
 
-async function _sendNotificationAsync({ userId, templateName, variables = {}, title, link, adminLink }: NotifyParams) {
+async function _sendNotificationAsync({ userId, templateName, variables = {}, title, message, link, adminLink }: NotifyParams) {
     const template = await db.notificationTemplate.findFirst({ where: { name: templateName } });
     if (!template) return;
 
@@ -36,17 +37,13 @@ async function _sendNotificationAsync({ userId, templateName, variables = {}, ti
     };
 
     const notifTitle = title || replaceVars(template.subject || templateName);
-
-    // Build clean plain text message
-    let messageText = replaceVars(template.email_body || template.subject || '');
-    // Decode HTML entities first
-    messageText = messageText
-      .replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<')
-      .replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'");
-    // Strip HTML tags
-    messageText = messageText.replace(/<[^>]*>/g, '');
-    // Remove any unresolved {{variables}}
-    messageText = messageText.replace(/\{\{[^}]+\}\}/g, '').replace(/\s+/g, ' ').trim().substring(0, 500);
+    const messageText = message ?? (() => {
+      let t = replaceVars(template.email_body || template.subject || '');
+      t = t.replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'");
+      t = t.replace(/<[^>]*>/g, '');
+      return t.replace(/\{\{[^}]+\}\}/g, '').replace(/\s+/g, ' ').trim().substring(0, 500);
+    })();
 
     // Log notification in database — type stores: system|userLink|adminLink
     await db.notificationLog.create({

@@ -6,7 +6,7 @@ import { sendNotification } from '@/lib/notifications';
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
-  const { deposit_id, action, custom_amount } = body;
+  const { deposit_id, action, custom_amount, rejected_amount, reject_reason } = body;
 
   if (!deposit_id || !action) {
     return NextResponse.json({ success: false, message: 'Missing required fields' }, { status: 400 });
@@ -58,7 +58,11 @@ export async function POST(req: NextRequest) {
         throw txErr;
       }
     } else {
-      await db.deposit.update({ where: { id: deposit_id }, data: { status: 3 } });
+      const finalRejectedAmount = rejected_amount && Number(rejected_amount) > 0 ? Number(rejected_amount) : deposit.amount;
+      await db.deposit.update({
+        where: { id: deposit_id },
+        data: { status: 3, amount: finalRejectedAmount },
+      });
     }
 
     // Send notification (non-blocking)
@@ -66,6 +70,10 @@ export async function POST(req: NextRequest) {
     if (updatedDeposit) {
       const detail = typeof updatedDeposit.detail === 'string' ? JSON.parse(updatedDeposit.detail) : updatedDeposit.detail as any;
       const templateName = action === 'approve' ? 'Deposit - Manual - Approved' : 'Deposit - Manual - Rejected';
+      const rejectTitle = `Your deposit of $${updatedDeposit.amount} has been rejected`;
+      const rejectMessage = reject_reason
+        ? `Rejected Amount: $${rejected_amount || updatedDeposit.amount}\nReason: ${reject_reason}`
+        : `Your deposit of $${updatedDeposit.amount} was rejected.`;
       sendNotification({
         userId: updatedDeposit.user_id,
         templateName,
@@ -79,8 +87,12 @@ export async function POST(req: NextRequest) {
           method_amount: String(updatedDeposit.final_amo || updatedDeposit.amount),
           site_currency: 'USDT',
           post_balance: String(updatedDeposit.user?.balance || 0),
+          ...(action === 'reject' && { reject_reason: reject_reason || '', rejected_amount: String(rejected_amount || updatedDeposit.amount) }),
         },
-        title: action === 'approve' ? `Deposit of $${updatedDeposit.amount} approved` : `Deposit of $${updatedDeposit.amount} rejected`,
+        title: action === 'approve'
+          ? `Deposit of $${updatedDeposit.amount} approved`
+          : rejectTitle,
+        message: action === 'reject' ? rejectMessage : undefined,
         link: '/transactions',
         adminLink: `/admin/deposits/${deposit_id}`,
       });
