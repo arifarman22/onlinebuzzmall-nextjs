@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Save, Eye, EyeOff, Hash, ShieldCheck, Key, SlidersHorizontal } from 'lucide-react';
+import { Save, Eye, EyeOff, Key, SlidersHorizontal } from 'lucide-react';
 
 interface UserInfo {
   id: number;
@@ -10,7 +10,6 @@ interface UserInfo {
   lastname: string | null;
   email: string;
   ref_by: number | null;
-  withdrawal_password: string | null;
   daily_order_limit: number;
   created_at: string;
 }
@@ -21,9 +20,7 @@ export default function UserInfoEditor({ user }: { user: UserInfo }) {
   const [loading, setLoading] = useState('');
   const [orderLimit, setOrderLimit] = useState(String(user.daily_order_limit));
   const [loginPassword, setLoginPassword] = useState('');
-  const [withdrawalPassword, setWithdrawalPassword] = useState('');
-  const [showLoginPw, setShowLoginPw] = useState(true);
-  const [showWithdrawPw, setShowWithdrawPw] = useState(true);
+  const [showLoginPw, setShowLoginPw] = useState(false);
 
   const handleAction = async (action: string, data: any, key: string) => {
     setLoading(key);
@@ -38,7 +35,6 @@ export default function UserInfoEditor({ user }: { user: UserInfo }) {
     setLoading('');
     if (result.success) {
       if (key === 'login_pw') setLoginPassword('');
-      if (key === 'withdraw_pw') setWithdrawalPassword('');
       router.refresh();
     }
     setTimeout(() => setMsg({ type: '', text: '' }), 4000);
@@ -46,10 +42,9 @@ export default function UserInfoEditor({ user }: { user: UserInfo }) {
 
   return (
     <div id="info-section" className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-      {/* Header */}
       <div className="px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white">
         <h3 className="text-sm font-semibold text-gray-900">User Settings</h3>
-        <p className="text-xs text-gray-400 mt-0.5">Manage passwords and order limits</p>
+        <p className="text-xs text-gray-400 mt-0.5">Manage password and order limits</p>
       </div>
 
       <div className="p-6 space-y-5">
@@ -74,6 +69,7 @@ export default function UserInfoEditor({ user }: { user: UserInfo }) {
               max="10000"
               value={orderLimit}
               onChange={(e) => setOrderLimit(e.target.value)}
+              placeholder="25"
               className="flex-1 px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-50 bg-white transition-all"
             />
             <button
@@ -85,43 +81,6 @@ export default function UserInfoEditor({ user }: { user: UserInfo }) {
               {loading === 'order_limit' ? '...' : 'Save'}
             </button>
           </div>
-        </div>
-
-        {/* Withdrawal Password */}
-        <div className="rounded-xl border border-gray-100 bg-gray-50/50 p-4">
-          <div className="flex items-center gap-2 mb-3">
-            <div className="w-7 h-7 rounded-lg bg-amber-100 flex items-center justify-center">
-              <ShieldCheck size={13} className="text-amber-600" />
-            </div>
-            <label className="text-sm font-medium text-gray-700">Withdrawal Password</label>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="relative flex-1">
-              <input
-                type={showWithdrawPw ? 'text' : 'password'}
-                value={withdrawalPassword}
-                onChange={(e) => setWithdrawalPassword(e.target.value)}
-                placeholder={user.withdrawal_password ? '••••••••' : 'Not set — enter to create'}
-                className="w-full px-3.5 py-2.5 pr-10 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-50 bg-white transition-all"
-              />
-              <button
-                type="button"
-                onClick={() => setShowWithdrawPw(!showWithdrawPw)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-              >
-                {showWithdrawPw ? <EyeOff size={15} /> : <Eye size={15} />}
-              </button>
-            </div>
-            <button
-              onClick={() => handleAction('change_withdrawal_password', { withdrawal_password: withdrawalPassword }, 'withdraw_pw')}
-              disabled={loading === 'withdraw_pw' || !withdrawalPassword}
-              className="flex items-center gap-1.5 px-4 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 text-white text-sm font-medium rounded-xl hover:from-amber-600 hover:to-amber-700 disabled:opacity-50 shadow-sm transition-all"
-            >
-              <Save size={13} />
-              {loading === 'withdraw_pw' ? '...' : 'Save'}
-            </button>
-          </div>
-          <p className="text-[11px] text-gray-400 mt-2">Leave empty and save to clear the withdrawal password</p>
         </div>
 
         {/* Login Password */}
@@ -138,7 +97,7 @@ export default function UserInfoEditor({ user }: { user: UserInfo }) {
                 type={showLoginPw ? 'text' : 'password'}
                 value={loginPassword}
                 onChange={(e) => setLoginPassword(e.target.value)}
-                placeholder="Enter new login password"
+                placeholder="New login password"
                 className="w-full px-3.5 py-2.5 pr-10 border border-rose-200 rounded-xl text-sm focus:outline-none focus:border-rose-400 focus:ring-2 focus:ring-rose-50 bg-white transition-all"
               />
               <button

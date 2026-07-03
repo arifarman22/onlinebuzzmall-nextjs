@@ -124,7 +124,7 @@ export default function UserRankAndAssignment({ userId, currentRankId }: Props) 
             <div className="flex items-center gap-3">
               <select value={rankId} onChange={(e) => setRankId(Number(e.target.value))} className="flex-1 px-3 py-2.5 border border-gray-200 rounded-xl text-sm bg-gray-50 focus:outline-none focus:border-indigo-500">
                 <option value={0}>No Rank</option>
-                {ranks.map((r) => <option key={r.id} value={r.id}>{r.name} ({r.commission}% commission)</option>)}
+                {ranks.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
               </select>
               <button onClick={handleUpdateRank} disabled={saving === 'rank'} className="px-4 py-2.5 bg-amber-500 text-white text-xs font-medium rounded-xl hover:bg-amber-600 disabled:opacity-50">
                 {saving === 'rank' ? '...' : 'Update'}

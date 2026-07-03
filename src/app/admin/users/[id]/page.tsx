@@ -151,6 +151,9 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
         <UserQuickActions userId={user.id} username={user.username} status={user.status} />
       </div>
 
+      {/* VIP Rank + Order Set */}
+      <UserRankAndAssignment userId={user.id} currentRankId={user.rank_id} />
+
       {/* Verification Status */}
       <div className="bg-white rounded-xl border border-gray-200 p-5">
         <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Verification Status</p>
@@ -188,9 +191,6 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
         </div>
       </div>
 
-      {/* VIP Rank + Order Set */}
-      <UserRankAndAssignment userId={user.id} currentRankId={user.rank_id} />
-
       {/* Balance Actions + Info Editor side by side on large screens */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
         <div id="balance-section">
@@ -203,7 +203,6 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
             lastname: user.lastname,
             email: user.email,
             ref_by: user.ref_by,
-            withdrawal_password: user.withdrawal_password,
             daily_order_limit: user.daily_order_limit,
             created_at: user.created_at.toISOString(),
           }} />

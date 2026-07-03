@@ -139,21 +139,21 @@ export default async function AdminDashboardPage() {
           <StatCard
             label="Active Users"
             value={activeUsers.toLocaleString()}
-            href="/admin/users?status=active"
+            href="/admin/users?filter=active"
             gradient="linear-gradient(135deg, #10b981 0%, #059669 100%)"
             icon={<UserCheck size={22} className="text-white" />}
           />
           <StatCard
             label="Unverified Email"
             value={unverifiedEmail.toLocaleString()}
-            href="/admin/users?ev=0"
+            href="/admin/users?filter=all"
             gradient="linear-gradient(135deg, #f59e0b 0%, #d97706 100%)"
             icon={<MailX size={22} className="text-white" />}
           />
           <StatCard
             label="Unverified Mobile"
             value={unverifiedMobile.toLocaleString()}
-            href="/admin/users?sv=0"
+            href="/admin/users?filter=all"
             gradient="linear-gradient(135deg, #f97316 0%, #ea580c 100%)"
             icon={<PhoneOff size={22} className="text-white" />}
           />
