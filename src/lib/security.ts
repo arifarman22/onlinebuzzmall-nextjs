@@ -94,32 +94,21 @@ export function securityMiddleware(req: NextRequest): NextResponse | null {
     return new NextResponse('Bad Request', { status: 400 });
   }
 
-  // 5. Rate limiting
+  // 5. Rate limiting — only apply to auth endpoints
   const isAuthEndpoint = pathname.includes('/api/auth') || pathname.includes('/login');
-  const isApiEndpoint = pathname.startsWith('/api/');
-
-  let limit = 300; // default: 300 req/min
-  let window = 60000;
-
   if (isAuthEndpoint) {
-    limit = 20; // auth: 20 req/min
-    window = 60000;
-  } else if (isApiEndpoint) {
-    limit = 300; // API: 300 req/min per IP
-    window = 60000;
-  }
-
-  const rl = checkRateLimit(`${ip}:${isAuthEndpoint ? 'auth' : 'general'}`, limit, window);
-  if (!rl.allowed) {
-    return new NextResponse(JSON.stringify({ error: 'Too many requests' }), {
-      status: 429,
-      headers: {
-        'Content-Type': 'application/json',
-        'Retry-After': '60',
-        'X-RateLimit-Limit': String(limit),
-        'X-RateLimit-Remaining': '0',
-      },
-    });
+    const rl = checkRateLimit(`${ip}:auth`, 20, 60000);
+    if (!rl.allowed) {
+      return new NextResponse(JSON.stringify({ error: 'Too many requests' }), {
+        status: 429,
+        headers: {
+          'Content-Type': 'application/json',
+          'Retry-After': '60',
+          'X-RateLimit-Limit': '20',
+          'X-RateLimit-Remaining': '0',
+        },
+      });
+    }
   }
 
   // 6. Block oversized URLs (potential buffer overflow)
