@@ -8,11 +8,28 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
   }
 
-  const { order_id, profit } = await req.json();
-  if (!order_id || profit === undefined || profit === null) {
-    return NextResponse.json({ success: false, message: 'order_id and profit required' }, { status: 400 });
-  }
+  const { order_id, profit, product_ids, quantities } = await req.json();
+  if (!order_id) return NextResponse.json({ success: false, message: 'order_id required' }, { status: 400 });
 
-  await db.order.update({ where: { id: order_id }, data: { profit: Number(profit) } });
+  await db.$transaction(async (tx) => {
+    if (profit !== undefined && profit !== null) {
+      await tx.order.update({ where: { id: order_id }, data: { profit: Number(profit) } });
+    }
+
+    // Replace order details if product_ids provided
+    if (Array.isArray(product_ids) && product_ids.length > 0) {
+      const products = await tx.product.findMany({ where: { id: { in: product_ids } } });
+      await tx.orderDetail.deleteMany({ where: { order_id } });
+      await tx.orderDetail.createMany({
+        data: product_ids.map((pid: number, i: number) => ({
+          order_id,
+          product_id: pid,
+          quantity: quantities?.[i] ?? 1,
+          price: products.find((p) => p.id === pid)?.price ?? 0,
+        })),
+      });
+    }
+  });
+
   return NextResponse.json({ success: true });
 }

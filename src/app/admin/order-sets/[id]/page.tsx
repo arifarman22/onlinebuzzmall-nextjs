@@ -10,7 +10,7 @@ interface Order {
   type: string | null;
   profit: number;
   status: number;
-  orderDetails: { id: number; product: { name: string; price: number }; price: number; quantity: number }[];
+  orderDetails: { id: number; product: { id: number; name: string; price: number }; price: number; quantity: number }[];
 }
 
 interface Product {
@@ -54,6 +54,10 @@ export default function ManageOrderSetPage() {
   // Inline profit edit
   const [editingOrderId, setEditingOrderId] = useState<number | null>(null);
   const [editingProfit, setEditingProfit] = useState('');
+
+  // Edit order modal
+  const [editOrderModal, setEditOrderModal] = useState<Order | null>(null);
+  const [editOrderForm, setEditOrderForm] = useState<{ profit: string; platform_id: string; products: { product_id: string; quantity: string }[] }>({ profit: '', platform_id: '', products: [] });
 
   // Add Order form
   const [orderForm, setOrderForm] = useState({ platform_id: '', product_id: '', profit: '5', price: 0, quantity: '1' });
@@ -166,6 +170,31 @@ export default function ManageOrderSetPage() {
       });
       const data = await res.json();
       if (data.success) { setEditingOrderId(null); fetchData(); }
+      else showMessage('error', data.message);
+    } catch { showMessage('error', 'Failed'); }
+    setSaving(false);
+  };
+
+  // Edit order save
+  const handleEditOrderSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editOrderModal) return;
+    const productIds = editOrderForm.products.map((p) => Number(p.product_id)).filter(Boolean);
+    if (productIds.length === 0) { showMessage('error', 'Select at least one product'); return; }
+    setSaving(true);
+    try {
+      const res = await fetch('/api/admin/order-sets/update-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          order_id: editOrderModal.id,
+          profit: Number(editOrderForm.profit),
+          product_ids: productIds,
+          quantities: editOrderForm.products.filter((p) => p.product_id).map((p) => Number(p.quantity) || 1),
+        }),
+      });
+      const data = await res.json();
+      if (data.success) { setEditOrderModal(null); fetchData(); showMessage('success', 'Order updated'); }
       else showMessage('error', data.message);
     } catch { showMessage('error', 'Failed'); }
     setSaving(false);
@@ -313,7 +342,20 @@ export default function ManageOrderSetPage() {
                           </span>
                         </td>
                         <td className="py-3 px-4">
-                          <button onClick={() => handleDeleteOrder(order.id)} className="p-1 text-red-400 hover:text-red-600"><Trash2 size={13} /></button>
+                          <div className="flex items-center gap-1">
+                            <button
+                              onClick={() => {
+                                setEditOrderModal(order);
+                                setEditOrderForm({
+                                  profit: String(order.profit),
+                                  platform_id: '',
+                                  products: order.orderDetails.map((d) => ({ product_id: String(d.product.id), quantity: String(d.quantity) })),
+                                });
+                              }}
+                              className="p-1 text-indigo-400 hover:text-indigo-600"
+                            ><Edit2 size={13} /></button>
+                            <button onClick={() => handleDeleteOrder(order.id)} className="p-1 text-red-400 hover:text-red-600"><Trash2 size={13} /></button>
+                          </div>
                         </td>
                       </tr>
                     );
@@ -324,6 +366,66 @@ export default function ManageOrderSetPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Edit Order Modal */}
+      {editOrderModal && (
+        <Modal title={`Edit Order #${editOrderModal.id}`} onClose={() => setEditOrderModal(null)}>
+          <form onSubmit={handleEditOrderSave} className="space-y-4">
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">Profit %</label>
+              <input type="number" step="0.01" value={editOrderForm.profit} onChange={(e) => setEditOrderForm({ ...editOrderForm, profit: e.target.value })} className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm bg-gray-50 focus:outline-none focus:border-indigo-500" required />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">Platform (filter products)</label>
+              <select value={editOrderForm.platform_id} onChange={(e) => setEditOrderForm({ ...editOrderForm, platform_id: e.target.value })} className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm bg-gray-50 focus:outline-none focus:border-indigo-500">
+                <option value="">All Platforms</option>
+                {platforms.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+              </select>
+            </div>
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-xs font-medium text-gray-700">Products</label>
+                {editOrderModal.type === 'combo' && (
+                  <button type="button" onClick={() => setEditOrderForm({ ...editOrderForm, products: [...editOrderForm.products, { product_id: '', quantity: '1' }] })} className="text-xs text-indigo-600 hover:underline">+ Add</button>
+                )}
+              </div>
+              <div className="space-y-2">
+                {editOrderForm.products.map((ep, idx) => {
+                  const filtered = editOrderForm.platform_id ? products.filter((p) => p.platform_id === Number(editOrderForm.platform_id)) : products;
+                  return (
+                    <div key={idx} className="flex items-center gap-2">
+                      <select value={ep.product_id} onChange={(e) => { const u = [...editOrderForm.products]; u[idx].product_id = e.target.value; setEditOrderForm({ ...editOrderForm, products: u }); }} className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm bg-gray-50 focus:outline-none focus:border-indigo-500">
+                        <option value="">Select Product...</option>
+                        {filtered.map((p) => <option key={p.id} value={p.id}>{p.name} (${p.price})</option>)}
+                      </select>
+                      <input type="number" min="1" value={ep.quantity} onChange={(e) => { const u = [...editOrderForm.products]; u[idx].quantity = e.target.value; setEditOrderForm({ ...editOrderForm, products: u }); }} className="w-16 px-2 py-2 border border-gray-200 rounded-lg text-sm bg-gray-50 focus:outline-none focus:border-indigo-500" placeholder="Qty" />
+                      {editOrderForm.products.length > 1 && (
+                        <button type="button" onClick={() => setEditOrderForm({ ...editOrderForm, products: editOrderForm.products.filter((_, i) => i !== idx) })} className="p-1 text-red-400 hover:text-red-600"><Trash2 size={13} /></button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+            {/* Summary */}
+            {editOrderForm.products.some((p) => p.product_id) && (() => {
+              const total = editOrderForm.products.reduce((s, ep) => { const prod = products.find((p) => p.id === Number(ep.product_id)); return s + (prod?.price || 0) * (Number(ep.quantity) || 1); }, 0);
+              const profitAmt = total * (Number(editOrderForm.profit) / 100);
+              return (
+                <div className="p-3 bg-indigo-50 rounded-xl text-xs space-y-1">
+                  <div className="flex justify-between"><span className="text-gray-600">Order Amount</span><span className="font-medium">${total.toFixed(2)}</span></div>
+                  <div className="flex justify-between"><span className="text-gray-600">Profit ({editOrderForm.profit}%)</span><span className="text-emerald-600 font-medium">+${profitAmt.toFixed(2)}</span></div>
+                  <div className="flex justify-between border-t border-indigo-200 pt-1"><span className="font-semibold">Total Income</span><span className="font-bold text-indigo-700">${(total + profitAmt).toFixed(2)}</span></div>
+                </div>
+              );
+            })()}
+            <div className="flex gap-3 pt-2">
+              <button type="button" onClick={() => setEditOrderModal(null)} className="flex-1 py-2.5 border border-gray-200 text-gray-700 text-sm font-medium rounded-xl hover:bg-gray-50">Cancel</button>
+              <button type="submit" disabled={saving} className="flex-1 py-2.5 bg-indigo-600 text-white text-sm font-medium rounded-xl hover:bg-indigo-700 disabled:opacity-50">{saving ? 'Saving...' : 'Save Changes'}</button>
+            </div>
+          </form>
+        </Modal>
+      )}
 
       {/* Add Order Modal */}
       {showAddOrder && (
