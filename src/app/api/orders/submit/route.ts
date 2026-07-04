@@ -120,22 +120,16 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Platform progression — based on cumulative (price + profit) earned
+    // Platform progression — threshold is simply the user's current balance after order
     const currentPlatformId = order.platform_id || order.orderSet?.platform_id || null;
     const orderSetId = order.order_set_id;
-
-    const profitAgg = await db.orderComplete.aggregate({
-      where: { user_id: userId, status: 1 },
-      _sum: { profit: true },
-    });
-    const totalEarned = Number(profitAgg._sum.profit || 0) + finalBalance;
+    const threshold = finalBalance;
 
     let redirectPlatformId: number | null = null;
     let redirectType: 'vip2' | 'vip3' | null = null;
-
-    // Find target platform based on threshold
     let targetPlatform: { id: number; commission: number } | null = null;
-    if (totalEarned > 899) {
+
+    if (threshold > 899) {
       targetPlatform = await db.platform.findFirst({
         where: { name: { contains: 'aliexpress' }, status: 1 },
         select: { id: true, commission: true },
@@ -144,7 +138,7 @@ export async function POST(req: NextRequest) {
         redirectPlatformId = targetPlatform.id;
         redirectType = 'vip3';
       }
-    } else if (totalEarned > 499) {
+    } else if (threshold > 499) {
       targetPlatform = await db.platform.findFirst({
         where: { name: { contains: 'alibaba' }, status: 1 },
         select: { id: true, commission: true },

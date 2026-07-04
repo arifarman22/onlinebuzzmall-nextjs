@@ -16,22 +16,18 @@ export default async function PlatformTasksPage({ params }: { params: Promise<{ 
   const platform = await db.platform.findUnique({ where: { id: platId } });
   if (!platform) redirect('/orders');
 
-  // Threshold = current balance + cumulative profit earned
-  const cumulativeProfitAgg = await db.orderComplete.aggregate({
-    where: { user_id: userId, status: 1 },
-    _sum: { profit: true },
-  });
-  const cumulativeTotal = user.balance + Number(cumulativeProfitAgg._sum.profit || 0);
+  // Threshold = user's current balance
+  const threshold = user.balance;
 
-  // Determine which platform the user should be on based on cumulative total
+  // Determine which platform the user should be on
   const [alibabaPlatform, aliexpressPlatform] = await Promise.all([
     db.platform.findFirst({ where: { name: { contains: 'alibaba' }, status: 1 }, select: { id: true } }),
     db.platform.findFirst({ where: { name: { contains: 'aliexpress' }, status: 1 }, select: { id: true } }),
   ]);
 
   const correctPlatformId =
-    cumulativeTotal > 899 ? aliexpressPlatform?.id :
-    cumulativeTotal > 499 ? alibabaPlatform?.id :
+    threshold > 899 ? aliexpressPlatform?.id :
+    threshold > 499 ? alibabaPlatform?.id :
     null;
 
   // Only redirect if: user is on wrong platform AND they have an assignment on the correct one

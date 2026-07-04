@@ -11,7 +11,7 @@ export default async function OrdersPage() {
   const user = await db.user.findUnique({ where: { id: userId } });
   if (!user) redirect('/login');
 
-  const [platforms, assignments, completedCount, totalProfit, pendingCount, profitAgg] = await Promise.all([
+  const [platforms, assignments, completedCount, totalProfit, pendingCount] = await Promise.all([
     db.platform.findMany({
       where: { status: 1, show_on_dashboard: 1 },
       orderBy: [{ vip_level: 'asc' }, { name: 'asc' }],
@@ -25,18 +25,17 @@ export default async function OrdersPage() {
     db.orderComplete.count({ where: { user_id: userId, status: 1 } }),
     db.orderComplete.aggregate({ where: { user_id: userId, status: 1 }, _sum: { profit: true } }),
     db.orderComplete.count({ where: { user_id: userId, status: 0 } }),
-    db.orderComplete.aggregate({ where: { user_id: userId, status: 1 }, _sum: { profit: true } }),
   ]);
 
-  // Threshold = current balance + cumulative profit
-  const threshold = user.balance + Number(profitAgg._sum.profit || 0);
+  // Threshold = user's current balance (grows with each profit earned)
+  const threshold = user.balance;
 
   // Filter platforms by threshold — only show what user has unlocked
   const allPlatforms = platforms.filter((p) => {
     const nameLower = p.name.toLowerCase();
     if (nameLower.includes('aliexpress')) return threshold > 899;
     if (nameLower.includes('alibaba')) return threshold > 499;
-    return true; // Amazon and any other platform always visible
+    return true;
   });
 
   return (
