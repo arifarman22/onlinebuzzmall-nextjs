@@ -266,7 +266,7 @@ function ActiveTaskCard({ task, platformId, userBalance, freezeAmount }: {
             <p className="text-lg font-bold text-gray-900">The Task is Completed</p>
             <p className="text-sm text-gray-400 mt-1 mb-6">Your commission has been credited</p>
             <button
-              onClick={() => router.refresh()}
+              onClick={() => { setDone(false); setOrderCompleteId(null); setOrderNo(null); router.refresh(); }}
               className="w-full py-3 bg-indigo-600 text-white text-sm font-semibold rounded-xl hover:bg-indigo-700 transition-colors"
             >
               OK
