@@ -8,18 +8,24 @@ import { ChevronDown, CheckCircle, AlertCircle } from 'lucide-react';
 interface WithdrawFormProps {
   methods: any[];
   balance: number;
+  hasIncompleteTasks: boolean;
 }
 
-export default function WithdrawForm({ methods, balance }: WithdrawFormProps) {
+export default function WithdrawForm({ methods, balance, hasIncompleteTasks }: WithdrawFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
   const [form, setForm] = useState({ method_id: '', amount: '' });
+  const [showBlockPopup, setShowBlockPopup] = useState(false);
 
   const selected = methods.find((m) => String(m.id) === form.method_id);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (hasIncompleteTasks) {
+      setShowBlockPopup(true);
+      return;
+    }
     setLoading(true);
     setMessage({ type: '', text: '' });
 
@@ -46,7 +52,25 @@ export default function WithdrawForm({ methods, balance }: WithdrawFormProps) {
   };
 
   return (
-    <div className="bg-slate-900 rounded-xl border border-slate-800 p-5">
+    <>
+      {showBlockPopup && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <div className="bg-slate-900 rounded-2xl w-full max-w-xs p-8 shadow-2xl flex flex-col items-center text-center border border-slate-700">
+            <div className="w-14 h-14 bg-red-500/10 rounded-full flex items-center justify-center mb-4">
+              <AlertCircle size={28} className="text-red-400" />
+            </div>
+            <h2 className="text-base font-bold text-white mb-2">Withdrawal Blocked</h2>
+            <p className="text-sm text-slate-400 mb-6">You can not perform withdraw without completing all the tasks.</p>
+            <button
+              onClick={() => setShowBlockPopup(false)}
+              className="w-full py-3 bg-red-500 text-white text-sm font-semibold rounded-xl hover:bg-red-600 transition-colors"
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      )}
+      <div className="bg-slate-900 rounded-xl border border-slate-800 p-5">
       <h3 className="text-sm font-semibold text-white mb-4">New Withdrawal</h3>
 
       {message.text && (
@@ -115,6 +139,7 @@ export default function WithdrawForm({ methods, balance }: WithdrawFormProps) {
 
         <Button type="submit" loading={loading} className="w-full">Submit Withdrawal</Button>
       </form>
-    </div>
+      </div>
+    </>
   );
 }

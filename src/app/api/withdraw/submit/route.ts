@@ -29,6 +29,13 @@ export async function POST(req: NextRequest) {
     const method = await db.withdrawMethod.findUnique({ where: { id: method_id } });
     if (!method || method.status !== 1) throw new Error('Method not available');
 
+    // Block withdrawal if user has incomplete task assignments
+    const incompleteTask = await db.orderSetAssign.findFirst({
+      where: { user_id: userId, percentage_completed: { lt: 100 } },
+      select: { id: true },
+    });
+    if (incompleteTask) throw new Error('You can not perform withdraw without completing all the tasks');
+
     if (amount < method.min_limit || amount > method.max_limit) {
       throw new Error(`Amount must be between $${method.min_limit} and $${method.max_limit}`);
     }

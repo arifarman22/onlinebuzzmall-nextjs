@@ -12,13 +12,20 @@ export default async function WithdrawPage() {
   const user = await db.user.findUnique({ where: { id: userId } });
   if (!user) return null;
 
-  const methods = await db.withdrawMethod.findMany({ where: { status: 1 } });
+  const [methods, withdrawals, incompleteAssignment] = await Promise.all([
+    db.withdrawMethod.findMany({ where: { status: 1 } }),
+    db.withdrawal.findMany({
+      where: { user_id: userId, status: { not: 0 } },
+      orderBy: { id: 'desc' },
+      take: 20,
+    }),
+    db.orderSetAssign.findFirst({
+      where: { user_id: userId, percentage_completed: { lt: 100 } },
+      select: { id: true },
+    }),
+  ]);
 
-  const withdrawals = await db.withdrawal.findMany({
-    where: { user_id: userId, status: { not: 0 } },
-    orderBy: { id: 'desc' },
-    take: 20,
-  });
+  const hasIncompleteTasks = !!incompleteAssignment;
 
   const statusMap: Record<number, { label: string; variant: 'success' | 'warning' | 'danger' | 'default' }> = {
     1: { label: 'Approved', variant: 'success' },
@@ -49,7 +56,7 @@ export default async function WithdrawPage() {
       </div>
 
       {/* Withdraw Form */}
-      <WithdrawForm methods={methods} balance={availableBalance} />
+      <WithdrawForm methods={methods} balance={availableBalance} hasIncompleteTasks={hasIncompleteTasks} />
 
       {/* Withdrawal History */}
       <div className="bg-slate-900 rounded-xl border border-slate-800">
