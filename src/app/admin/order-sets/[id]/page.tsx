@@ -57,7 +57,7 @@ export default function ManageOrderSetPage() {
 
   // Edit order modal
   const [editOrderModal, setEditOrderModal] = useState<Order | null>(null);
-  const [editOrderForm, setEditOrderForm] = useState<{ profit: string; platform_id: string; products: { product_id: string; quantity: string }[] }>({ profit: '', platform_id: '', products: [] });
+  const [editOrderForm, setEditOrderForm] = useState<{ profit: string; platform_id: string; type: string; products: { product_id: string; quantity: string }[] }>({ profit: '', platform_id: '', type: 'single', products: [] });
 
   // Add Order form
   const [orderForm, setOrderForm] = useState({ platform_id: '', product_id: '', profit: '5', price: 0, quantity: '1' });
@@ -189,6 +189,7 @@ export default function ManageOrderSetPage() {
         body: JSON.stringify({
           order_id: editOrderModal.id,
           profit: Number(editOrderForm.profit),
+          type: editOrderForm.type,
           product_ids: productIds,
           quantities: editOrderForm.products.filter((p) => p.product_id).map((p) => Number(p.quantity) || 1),
         }),
@@ -349,6 +350,7 @@ export default function ManageOrderSetPage() {
                                 setEditOrderForm({
                                   profit: String(order.profit),
                                   platform_id: '',
+                                  type: order.type || 'single',
                                   products: order.orderDetails.map((d) => ({ product_id: String(d.product.id), quantity: String(d.quantity) })),
                                 });
                               }}
@@ -372,6 +374,27 @@ export default function ManageOrderSetPage() {
         <Modal title={`Edit Order #${editOrderModal.id}`} onClose={() => setEditOrderModal(null)}>
           <form onSubmit={handleEditOrderSave} className="space-y-4">
             <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">Order Type</label>
+              <div className="flex gap-2">
+                {(['single', 'combo'] as const).map((t) => (
+                  <button
+                    key={t} type="button"
+                    onClick={() => setEditOrderForm((f) => ({
+                      ...f, type: t,
+                      products: t === 'single' ? [f.products[0] || { product_id: '', quantity: '1' }] : f.products,
+                    }))}
+                    className={`flex-1 py-2 text-xs font-medium rounded-lg border transition-colors ${
+                      editOrderForm.type === t
+                        ? t === 'combo' ? 'bg-purple-600 text-white border-purple-600' : 'bg-indigo-600 text-white border-indigo-600'
+                        : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                    }`}
+                  >
+                    {t === 'combo' ? 'Combo' : 'Single'}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
               <label className="block text-xs font-medium text-gray-700 mb-1">Profit %</label>
               <input type="number" step="0.01" value={editOrderForm.profit} onChange={(e) => setEditOrderForm({ ...editOrderForm, profit: e.target.value })} className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm bg-gray-50 focus:outline-none focus:border-indigo-500" required />
             </div>
@@ -385,7 +408,7 @@ export default function ManageOrderSetPage() {
             <div>
               <div className="flex items-center justify-between mb-2">
                 <label className="block text-xs font-medium text-gray-700">Products</label>
-                {editOrderModal.type === 'combo' && (
+                {editOrderForm.type === 'combo' && (
                   <button type="button" onClick={() => setEditOrderForm({ ...editOrderForm, products: [...editOrderForm.products, { product_id: '', quantity: '1' }] })} className="text-xs text-indigo-600 hover:underline">+ Add</button>
                 )}
               </div>

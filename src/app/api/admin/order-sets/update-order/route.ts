@@ -8,12 +8,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
   }
 
-  const { order_id, profit, product_ids, quantities } = await req.json();
+  const { order_id, profit, product_ids, quantities, type } = await req.json();
   if (!order_id) return NextResponse.json({ success: false, message: 'order_id required' }, { status: 400 });
 
   await db.$transaction(async (tx) => {
-    if (profit !== undefined && profit !== null) {
-      await tx.order.update({ where: { id: order_id }, data: { profit: Number(profit) } });
+    const orderUpdate: Record<string, unknown> = {};
+    if (profit !== undefined && profit !== null) orderUpdate.profit = Number(profit);
+    if (type !== undefined) orderUpdate.type = type;
+    if (Object.keys(orderUpdate).length > 0) {
+      await tx.order.update({ where: { id: order_id }, data: orderUpdate });
     }
 
     // Replace order details if product_ids provided
