@@ -40,14 +40,14 @@ function getUnlockThreshold(name: string): number {
   const n = name.toLowerCase();
   if (n.includes('aliexpress')) return 900;
   if (n.includes('alibaba')) return 500;
-  return 0;
+  return 20; // Amazon requires minimum $20
 }
 
 function getUnlockLabel(name: string): string {
   const n = name.toLowerCase();
   if (n.includes('aliexpress')) return 'Unlocks at $900 balance';
   if (n.includes('alibaba')) return 'Unlocks at $500 balance';
-  return '';
+  return 'Requires minimum $20 balance';
 }
 
 export default function OrdersClient({ user, platforms, assignments, stats }: Props) {

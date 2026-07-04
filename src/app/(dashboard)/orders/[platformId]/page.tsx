@@ -16,33 +16,21 @@ export default async function PlatformTasksPage({ params }: { params: Promise<{ 
   const platform = await db.platform.findUnique({ where: { id: platId } });
   if (!platform) redirect('/orders');
 
-  // Threshold = available balance (balance minus freeze_amount)
-  const threshold = user.balance - user.freeze_amount;
-
-  // Determine which platform the user should be on
-  const [alibabaPlatform, aliexpressPlatform] = await Promise.all([
+  // Redirect based on user's available balance tier
+  const availableBalance = user.balance - user.freeze_amount;
+  const [amazonPlatform, alibabaPlatform, aliexpressPlatform] = await Promise.all([
+    db.platform.findFirst({ where: { name: { contains: 'amazon' }, status: 1 }, select: { id: true } }),
     db.platform.findFirst({ where: { name: { contains: 'alibaba' }, status: 1 }, select: { id: true } }),
     db.platform.findFirst({ where: { name: { contains: 'aliexpress' }, status: 1 }, select: { id: true } }),
   ]);
 
   const correctPlatformId =
-    threshold > 899 ? aliexpressPlatform?.id :
-    threshold > 499 ? alibabaPlatform?.id :
-    null;
+    availableBalance >= 900 ? aliexpressPlatform?.id :
+    availableBalance >= 500 ? alibabaPlatform?.id :
+    amazonPlatform?.id;
 
-  // Only redirect if: user is on wrong platform AND has assignment on correct one AND no assignment on current platform
   if (correctPlatformId && platId !== correctPlatformId) {
-    const [hasAssignmentOnCorrect, hasAssignmentOnCurrent] = await Promise.all([
-      db.orderSetAssign.findFirst({
-        where: { user_id: userId, orderSet: { platform_id: correctPlatformId }, percentage_completed: { lt: 100 } },
-        select: { id: true },
-      }),
-      db.orderSetAssign.findFirst({
-        where: { user_id: userId, orderSet: { platform_id: platId }, percentage_completed: { lt: 100 } },
-        select: { id: true },
-      }),
-    ]);
-    if (hasAssignmentOnCorrect && !hasAssignmentOnCurrent) redirect(`/orders/${correctPlatformId}`);
+    redirect(`/orders/${correctPlatformId}`);
   }
 
   // Get all assignments for this platform, pick the first incomplete one

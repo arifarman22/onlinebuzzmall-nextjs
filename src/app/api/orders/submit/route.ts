@@ -120,17 +120,16 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Platform progression — threshold is available balance (balance minus freeze)
+    // Platform progression — threshold is available balance after order
     const currentPlatformId = order.platform_id || order.orderSet?.platform_id || null;
     const orderSetId = order.order_set_id;
-    const freshUser = await db.user.findUnique({ where: { id: userId }, select: { freeze_amount: true } });
-    const threshold = finalBalance - (freshUser?.freeze_amount || 0);
+    const threshold = finalBalance - user.freeze_amount;
 
     let redirectPlatformId: number | null = null;
     let redirectType: 'vip2' | 'vip3' | null = null;
     let targetPlatform: { id: number; commission: number } | null = null;
 
-    if (threshold > 899) {
+    if (threshold >= 900) {
       targetPlatform = await db.platform.findFirst({
         where: { name: { contains: 'aliexpress' }, status: 1 },
         select: { id: true, commission: true },
@@ -139,7 +138,7 @@ export async function POST(req: NextRequest) {
         redirectPlatformId = targetPlatform.id;
         redirectType = 'vip3';
       }
-    } else if (threshold > 499) {
+    } else if (threshold >= 500) {
       targetPlatform = await db.platform.findFirst({
         where: { name: { contains: 'alibaba' }, status: 1 },
         select: { id: true, commission: true },

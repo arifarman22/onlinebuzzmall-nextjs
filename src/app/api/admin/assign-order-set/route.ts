@@ -48,10 +48,35 @@ export async function POST(req: NextRequest) {
     const orderSet = await db.orderSet.findUnique({ where: { id: order_set_id }, include: { orders: true } });
     if (!orderSet) return NextResponse.json({ success: false, message: 'Order set not found' }, { status: 404 });
 
-    // Create assignment only — OrderComplete records are created on-demand when user starts each task
+    // Determine correct platform based on user's available balance
+    const availableBalance = user.balance - user.freeze_amount;
+    let targetPlatformName = 'amazon';
+    if (availableBalance >= 900) targetPlatformName = 'aliexpress';
+    else if (availableBalance >= 500) targetPlatformName = 'alibaba';
+
+    const targetPlatform = await db.platform.findFirst({
+      where: { name: { contains: targetPlatformName }, status: 1 },
+      select: { id: true, commission: true },
+    });
+
+    // Override order set platform and all its orders to match user's balance tier
+    if (targetPlatform) {
+      await Promise.all([
+        db.orderSet.update({
+          where: { id: order_set_id },
+          data: { platform_id: targetPlatform.id },
+        }),
+        db.order.updateMany({
+          where: { order_set_id },
+          data: { platform_id: targetPlatform.id, profit: targetPlatform.commission },
+        }),
+      ]);
+    }
+
+    // Create assignment — OrderComplete records created on-demand when user starts each task
     await db.orderSetAssign.create({ data: { user_id, order_set_id, percentage_completed: 0 } });
 
-    return NextResponse.json({ success: true, message: `Assigned successfully` });
+    return NextResponse.json({ success: true, message: `Assigned successfully to ${targetPlatformName}` });
   }
 
   if (action === 'remove') {
