@@ -20,9 +20,24 @@ export async function POST(req: NextRequest) {
     // status: 0 = pending, status: 1 = completed — only allow new start if none pending
     const existingPending = await db.orderComplete.findFirst({
       where: { user_id: userId, status: 0 },
+      select: { id: true, order_no: true, order_id: true },
     });
     if (existingPending) {
-      return NextResponse.json({ success: false, message: 'Complete your active task first.' }, { status: 400 });
+      // Return existing pending order data so client can show correct modal values
+      const pendingOrder = await db.order.findUnique({ where: { id: existingPending.order_id } });
+      const pendingDetails = await db.orderDetail.findMany({ where: { order_id: existingPending.order_id } });
+      const price = pendingDetails.reduce((sum, d) => sum + d.price * d.quantity, 0);
+      const profitPercent = pendingOrder?.profit ?? 0;
+      const profit = price * (profitPercent / 100);
+      return NextResponse.json({
+        success: true,
+        order_complete_id: existingPending.id,
+        order_no: existingPending.order_no,
+        price,
+        profit,
+        profit_percent: profitPercent,
+        order_type: pendingOrder?.type,
+      });
     }
 
     // ===== Find user's assignment for this platform =====

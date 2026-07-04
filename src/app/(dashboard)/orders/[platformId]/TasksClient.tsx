@@ -202,7 +202,7 @@ function ActiveTaskCard({ task, platformId, userBalance, freezeAmount }: {
       const res = await fetch('/api/orders/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ order_id: orderCompleteId, price: task.price }),
+        body: JSON.stringify({ order_id: orderCompleteId, price: livePrice }),
       });
       const data = await res.json();
       if (data.success) {
@@ -293,7 +293,7 @@ function ActiveTaskCard({ task, platformId, userBalance, freezeAmount }: {
         {isPending ? (
           <>
             <button
-              onClick={() => canAfford ? setShowConfirm(true) : null}
+              onClick={() => canAfford ? handleStart() : null}
               disabled={loading || !canAfford}
               className={`w-full flex items-center justify-center gap-2 py-3.5 text-white text-sm font-semibold rounded-xl disabled:opacity-50 transition-colors ${!canAfford ? 'bg-gradient-to-br from-indigo-600 to-purple-700' : 'bg-indigo-600 hover:bg-indigo-700'}`}
             >
