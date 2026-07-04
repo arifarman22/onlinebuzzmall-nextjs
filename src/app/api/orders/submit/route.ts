@@ -96,7 +96,7 @@ export async function POST(req: NextRequest) {
 
       await tx.orderComplete.update({
         where: { id: order_id },
-        data: { profit, balance: finalUser.balance, end_at: new Date(), status: 1 },
+        data: { profit, price: totalPrice, balance: finalUser.balance, end_at: new Date(), status: 1 },
       });
 
       return finalUser.balance;
@@ -120,7 +120,43 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    return NextResponse.json({ success: true, message: 'Order completed successfully!' });
+    // Platform progression — based on cumulative (price + profit) earned
+    const currentPlatformId = order.platform_id || order.orderSet?.platform_id || null;
+
+    const [priceAgg, profitAgg] = await Promise.all([
+      db.orderComplete.aggregate({ where: { user_id: userId, status: 1 }, _sum: { price: true } }),
+      db.orderComplete.aggregate({ where: { user_id: userId, status: 1 }, _sum: { profit: true } }),
+    ]);
+    const totalEarned = Number(priceAgg._sum.price || 0) + Number(profitAgg._sum.profit || 0);
+
+    let redirectPlatformId: number | null = null;
+    let redirectType: 'vip2' | 'vip3' | null = null;
+
+    if (totalEarned > 899) {
+      const aliexpress = await db.platform.findFirst({
+        where: { name: { contains: 'aliexpress' }, status: 1 },
+        select: { id: true },
+      });
+      if (aliexpress && currentPlatformId !== aliexpress.id) {
+        redirectPlatformId = aliexpress.id;
+        redirectType = 'vip3';
+      }
+    } else if (totalEarned > 499) {
+      const alibaba = await db.platform.findFirst({
+        where: { name: { contains: 'alibaba' }, status: 1 },
+        select: { id: true },
+      });
+      if (alibaba && currentPlatformId !== alibaba.id) {
+        redirectPlatformId = alibaba.id;
+        redirectType = 'vip2';
+      }
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: 'Order completed successfully!',
+      ...(redirectPlatformId && { redirect_platform_id: redirectPlatformId, redirect_type: redirectType }),
+    });
   } catch (error: any) {
     return NextResponse.json({ success: false, message: error.message || 'Failed to submit order' }, { status: 400 });
   }

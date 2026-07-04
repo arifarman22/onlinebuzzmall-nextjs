@@ -126,7 +126,8 @@ function ActiveTaskCard({ task, platformId, userBalance, freezeAmount }: {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [showConfirm, setShowConfirm] = useState(false);
-  const [done, setDone] = useState(false); // tick animation state
+  const [done, setDone] = useState(false);
+  const [vipUpgrade, setVipUpgrade] = useState<{ platformId: number; type: 'vip2' | 'vip3' } | null>(null);
 
   const availableBalance = userBalance - freezeAmount;
   const canAfford = availableBalance >= task.price;
@@ -166,7 +167,11 @@ function ActiveTaskCard({ task, platformId, userBalance, freezeAmount }: {
       });
       const data = await res.json();
       if (data.success) {
-        setDone(true);
+        if ((data.redirect_type === 'vip2' || data.redirect_type === 'vip3') && data.redirect_platform_id) {
+          setVipUpgrade({ platformId: data.redirect_platform_id, type: data.redirect_type });
+        } else {
+          setDone(true);
+        }
       } else {
         setMessage(data.message || 'Failed');
       }
@@ -175,6 +180,32 @@ function ActiveTaskCard({ task, platformId, userBalance, freezeAmount }: {
     }
     setLoading(false);
   };
+
+  if (vipUpgrade) {
+    const isVip3 = vipUpgrade.type === 'vip3';
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+        <div className="bg-white rounded-2xl w-full max-w-xs p-8 shadow-2xl flex flex-col items-center text-center">
+          <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mb-4">
+            <span className="text-3xl">{isVip3 ? '🏆' : '⭐'}</span>
+          </div>
+          <h2 className="text-lg font-bold text-gray-900 mb-2">Congratulations!</h2>
+          <p className="text-sm text-gray-500 mb-1">
+            You are now a <span className="font-semibold text-amber-600">{isVip3 ? 'VIP 3' : 'VIP 2'}</span> customer.
+          </p>
+          <p className="text-sm text-gray-500 mb-6">
+            Please go to the <span className="font-semibold">{isVip3 ? 'AliExpress' : 'Alibaba'}</span> platform to continue completing orders.
+          </p>
+          <button
+            onClick={() => router.push(`/orders/${vipUpgrade.platformId}`)}
+            className="w-full py-3 bg-amber-500 text-white text-sm font-semibold rounded-xl hover:bg-amber-600 transition-colors"
+          >
+            Go to {isVip3 ? 'AliExpress VIP 3' : 'Alibaba VIP 2'} →
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (done) {
     return (

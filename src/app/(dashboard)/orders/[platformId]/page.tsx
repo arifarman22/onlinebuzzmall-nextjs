@@ -16,6 +16,33 @@ export default async function PlatformTasksPage({ params }: { params: Promise<{ 
   const platform = await db.platform.findUnique({ where: { id: platId } });
   if (!platform) redirect('/orders');
 
+  // Cumulative earned (price + profit) — determines platform progression
+  const [cumulativePriceAgg, cumulativeProfitAgg] = await Promise.all([
+    db.orderComplete.aggregate({ where: { user_id: userId, status: 1 }, _sum: { price: true } }),
+    db.orderComplete.aggregate({ where: { user_id: userId, status: 1 }, _sum: { profit: true } }),
+  ]);
+  const cumulativeTotal = Number(cumulativePriceAgg._sum.price || 0) + Number(cumulativeProfitAgg._sum.profit || 0);
+
+  // Determine which platform the user should be on based on cumulative total
+  const [alibabaPlatform, aliexpressPlatform] = await Promise.all([
+    db.platform.findFirst({ where: { name: { contains: 'alibaba' }, status: 1 }, select: { id: true } }),
+    db.platform.findFirst({ where: { name: { contains: 'aliexpress' }, status: 1 }, select: { id: true } }),
+  ]);
+
+  const correctPlatformId =
+    cumulativeTotal > 899 ? aliexpressPlatform?.id :
+    cumulativeTotal > 499 ? alibabaPlatform?.id :
+    null;
+
+  // Only redirect if: user is on wrong platform AND they have an assignment on the correct one
+  if (correctPlatformId && platId !== correctPlatformId) {
+    const hasAssignment = await db.orderSetAssign.findFirst({
+      where: { user_id: userId, orderSet: { platform_id: correctPlatformId }, percentage_completed: { lt: 100 } },
+      select: { id: true },
+    });
+    if (hasAssignment) redirect(`/orders/${correctPlatformId}`);
+  }
+
   // Get all assignments for this platform, pick the first incomplete one
   const allAssignments = await db.orderSetAssign.findMany({
     where: { user_id: userId, orderSet: { platform_id: platId } },
