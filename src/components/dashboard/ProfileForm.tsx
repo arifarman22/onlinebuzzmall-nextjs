@@ -200,11 +200,15 @@ export default function ProfileForm({ user }: ProfileFormProps) {
 
   // Auto-detect country code from IP if not already set
   useEffect(() => {
-    if (form.country_code) return;
+    if (user.country_code) return;
     fetch('https://ipapi.co/json/')
       .then((r) => r.json())
-      .then((d) => { if (d.country_calling_code) setForm((f) => ({ ...f, country_code: d.country_calling_code.replace('+', '') })); })
+      .then((d) => {
+        const match = COUNTRY_CODES.find((c) => c.code === d.country_code);
+        if (match) setForm((f) => ({ ...f, country_code: match.dial }));
+      })
       .catch(() => {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const [passForm, setPassForm] = useState({ current_password: '', new_password: '', confirm_password: '' });
 
