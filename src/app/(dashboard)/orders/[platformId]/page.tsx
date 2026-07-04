@@ -16,8 +16,8 @@ export default async function PlatformTasksPage({ params }: { params: Promise<{ 
   const platform = await db.platform.findUnique({ where: { id: platId } });
   if (!platform) redirect('/orders');
 
-  // Threshold = user's current balance
-  const threshold = user.balance;
+  // Threshold = available balance (balance minus freeze_amount)
+  const threshold = user.balance - user.freeze_amount;
 
   // Determine which platform the user should be on
   const [alibabaPlatform, aliexpressPlatform] = await Promise.all([

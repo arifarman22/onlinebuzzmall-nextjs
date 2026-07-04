@@ -120,10 +120,11 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Platform progression — threshold is simply the user's current balance after order
+    // Platform progression — threshold is available balance (balance minus freeze)
     const currentPlatformId = order.platform_id || order.orderSet?.platform_id || null;
     const orderSetId = order.order_set_id;
-    const threshold = finalBalance;
+    const freshUser = await db.user.findUnique({ where: { id: userId }, select: { freeze_amount: true } });
+    const threshold = finalBalance - (freshUser?.freeze_amount || 0);
 
     let redirectPlatformId: number | null = null;
     let redirectType: 'vip2' | 'vip3' | null = null;

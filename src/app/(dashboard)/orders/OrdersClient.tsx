@@ -119,7 +119,8 @@ export default function OrdersClient({ user, platforms, assignments, stats }: Pr
         ) : (
           filteredPlatforms.map((platform) => {
             const threshold = getUnlockThreshold(platform.name);
-            const isUnlocked = user.balance >= threshold;
+            const availableBalance = user.balance - user.freeze_amount;
+            const isUnlocked = availableBalance >= threshold;
             const platformAssignments = assignments.filter(a => a.platform_id === platform.id);
             const hasAssignment = platformAssignments.length > 0 && isUnlocked;
             const totalTasks = platformAssignments.reduce((s, a) => s + a.orderCount, 0);
