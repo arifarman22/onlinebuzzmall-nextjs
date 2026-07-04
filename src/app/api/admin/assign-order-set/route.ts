@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { generateOrderNo } from '@/lib/utils';
 
 export async function GET(req: NextRequest) {
   const session = await auth();
@@ -49,29 +48,10 @@ export async function POST(req: NextRequest) {
     const orderSet = await db.orderSet.findUnique({ where: { id: order_set_id }, include: { orders: true } });
     if (!orderSet) return NextResponse.json({ success: false, message: 'Order set not found' }, { status: 404 });
 
-    // Create assignment
+    // Create assignment only — OrderComplete records are created on-demand when user starts each task
     await db.orderSetAssign.create({ data: { user_id, order_set_id, percentage_completed: 0 } });
 
-    // Create OrderComplete records for each order
-    for (const order of orderSet.orders) {
-      const orderDetails = await db.orderDetail.findMany({ where: { order_id: order.id } });
-      const totalPrice = orderDetails.reduce((s, d) => s + d.price * d.quantity, 0);
-
-      await db.orderComplete.create({
-        data: {
-          order_set_id,
-          user_id,
-          order_id: order.id,
-          order_no: generateOrderNo(),
-          price: totalPrice,
-          profit: 0,
-          balance: user.balance,
-          status: 0,
-        },
-      });
-    }
-
-    return NextResponse.json({ success: true, message: `Assigned with ${orderSet.orders.length} order(s)` });
+    return NextResponse.json({ success: true, message: `Assigned successfully` });
   }
 
   if (action === 'remove') {
