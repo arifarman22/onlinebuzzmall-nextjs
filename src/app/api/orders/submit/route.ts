@@ -149,10 +149,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Migrate the order set to the new platform:
-    // 1. Update OrderSet.platform_id
-    // 2. Update all incomplete Order.profit to new commission rate
-    // 3. Update all incomplete Order.platform_id to new platform
+    // Migrate order set to new platform — only update platform_id, preserve per-order profit
     if (redirectPlatformId && targetPlatform && orderSetId) {
       const completedOrderIds = await db.orderComplete.findMany({
         where: { user_id: userId, order_set_id: orderSetId, status: 1 },
@@ -167,7 +164,7 @@ export async function POST(req: NextRequest) {
         }),
         db.order.updateMany({
           where: { order_set_id: orderSetId, id: { notIn: completedIds.length ? completedIds : [-1] } },
-          data: { platform_id: redirectPlatformId, profit: targetPlatform.commission },
+          data: { platform_id: redirectPlatformId },
         }),
       ]);
     }

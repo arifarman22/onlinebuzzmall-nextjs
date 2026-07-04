@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
       select: { id: true, commission: true },
     });
 
-    // Override order set platform and all its orders to match user's balance tier
+    // Override order set platform only — preserve per-order profit values
     if (targetPlatform) {
       await Promise.all([
         db.orderSet.update({
@@ -68,7 +68,7 @@ export async function POST(req: NextRequest) {
         }),
         db.order.updateMany({
           where: { order_set_id },
-          data: { platform_id: targetPlatform.id, profit: targetPlatform.commission },
+          data: { platform_id: targetPlatform.id },
         }),
       ]);
     }

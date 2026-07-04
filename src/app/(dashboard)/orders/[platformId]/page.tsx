@@ -49,12 +49,11 @@ export default async function PlatformTasksPage({ params }: { params: Promise<{ 
         select: { order_id: true },
       });
       const ids = completedIds.map((c) => c.order_id);
-      const tp = await db.platform.findUnique({ where: { id: targetPlatformId }, select: { commission: true } });
       await Promise.all([
         db.orderSet.update({ where: { id: activeAssignment.order_set_id }, data: { platform_id: targetPlatformId } }),
         db.order.updateMany({
           where: { order_set_id: activeAssignment.order_set_id, id: { notIn: ids.length ? ids : [-1] } },
-          data: { platform_id: targetPlatformId, profit: tp?.commission ?? 0 },
+          data: { platform_id: targetPlatformId },
         }),
       ]);
     }
