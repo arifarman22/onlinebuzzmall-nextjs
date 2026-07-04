@@ -77,7 +77,13 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    return NextResponse.json({ success: true, message: 'Order started successfully.' });
+    const created = await db.orderComplete.findFirst({
+      where: { user_id: userId, order_id: nextOrder.id, status: 0 },
+      select: { id: true, order_no: true },
+      orderBy: { id: 'desc' },
+    });
+
+    return NextResponse.json({ success: true, message: 'Order started successfully.', order_complete_id: created?.id, order_no: created?.order_no });
   } catch (error: any) {
     return NextResponse.json({ success: false, message: error.message || 'Failed to start order' }, { status: 500 });
   }

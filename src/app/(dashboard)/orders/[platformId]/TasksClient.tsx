@@ -157,10 +157,12 @@ function ActiveTaskCard({ task, platformId, userBalance, freezeAmount }: {
   const [showConfirm, setShowConfirm] = useState(false);
   const [done, setDone] = useState(false);
   const [vipUpgrade, setVipUpgrade] = useState<{ platformId: number; type: 'vip2' | 'vip3' } | null>(null);
+  const [orderNo, setOrderNo] = useState<string | null>(task.orderNo);
+  const [orderCompleteId, setOrderCompleteId] = useState<number | null>(task.orderCompleteId);
 
   const availableBalance = userBalance - freezeAmount;
   const canAfford = availableBalance >= task.price;
-  const isPending = task.status === 'pending';
+  const isPending = task.status === 'pending' || orderCompleteId !== null;
 
   const handleStart = async () => {
     setLoading(true);
@@ -173,7 +175,10 @@ function ActiveTaskCard({ task, platformId, userBalance, freezeAmount }: {
       });
       const data = await res.json();
       if (data.success) {
-        router.refresh();
+        // Store the order info from response and show confirm modal immediately
+        setOrderCompleteId(data.order_complete_id);
+        setOrderNo(data.order_no);
+        setShowConfirm(true);
       } else {
         setMessage(data.message || 'Failed to start');
       }
@@ -184,7 +189,7 @@ function ActiveTaskCard({ task, platformId, userBalance, freezeAmount }: {
   };
 
   const handleComplete = async () => {
-    if (!task.orderCompleteId) return;
+    if (!orderCompleteId) return;
     setShowConfirm(false);
     setLoading(true);
     setMessage('');
@@ -192,7 +197,7 @@ function ActiveTaskCard({ task, platformId, userBalance, freezeAmount }: {
       const res = await fetch('/api/orders/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ order_id: task.orderCompleteId, price: task.price }),
+        body: JSON.stringify({ order_id: orderCompleteId, price: task.price }),
       });
       const data = await res.json();
       if (data.success) {
@@ -261,7 +266,7 @@ function ActiveTaskCard({ task, platformId, userBalance, freezeAmount }: {
             <p className="text-lg font-bold text-gray-900">The Task is Completed</p>
             <p className="text-sm text-gray-400 mt-1 mb-6">Your commission has been credited</p>
             <button
-              onClick={() => window.location.reload()}
+              onClick={() => router.refresh()}
               className="w-full py-3 bg-indigo-600 text-white text-sm font-semibold rounded-xl hover:bg-indigo-700 transition-colors"
             >
               OK
@@ -316,9 +321,9 @@ function ActiveTaskCard({ task, platformId, userBalance, freezeAmount }: {
             <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 bg-gradient-to-r from-indigo-600 to-purple-700 rounded-t-2xl">
               <div>
                 <h3 className="text-base font-bold text-white">Confirm Order</h3>
-                {task.orderNo && (
+                {orderNo && (
                   <p className="text-xs font-mono mt-0.5 text-indigo-200">
-                    Order No: <span className="font-bold text-white">#{task.orderNo}</span>
+                    Order No: <span className="font-bold text-white">#{orderNo}</span>
                   </p>
                 )}
               </div>
