@@ -27,20 +27,8 @@ export default async function OrdersPage() {
     db.orderComplete.count({ where: { user_id: userId, status: 0 } }),
   ]);
 
-  // Threshold = user's current balance (grows with each profit earned)
-  const threshold = user.balance;
-
-  // Platforms the user has active assignments on
-  const assignedPlatformIds = new Set(assignments.map((a) => a.orderSet?.platform?.id).filter(Boolean));
-
-  // Show platform if: user has an assignment on it OR balance threshold is met
-  const allPlatforms = platforms.filter((p) => {
-    if (assignedPlatformIds.has(p.id)) return true; // always show if assigned
-    const nameLower = p.name.toLowerCase();
-    if (nameLower.includes('aliexpress')) return threshold > 899;
-    if (nameLower.includes('alibaba')) return threshold > 499;
-    return true;
-  });
+  // Always show all platforms — balance determines active/locked state in client
+  const allPlatforms = platforms;
 
   return (
     <OrdersClient
