@@ -1,24 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { generateTrx } from '@/lib/utils';
 import { withdrawSchema } from '@/lib/validations';
 import { sendAdminNotification } from '@/lib/notifications';
 import { rateLimit, getRateLimitKey } from '@/lib/rate-limit';
+import { getApiUserId } from '@/lib/api-auth';
 
 export async function POST(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user?.id) {
+  const userId = await getApiUserId(req);
+  if (!userId) {
     return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
   }
 
-  const rlKey = getRateLimitKey(req, `withdraw:${session.user.id}`);
+  const rlKey = getRateLimitKey(req, `withdraw:${userId}`);
   const rl = rateLimit(rlKey, 5, 60 * 1000);
   if (!rl.success) {
     return NextResponse.json({ success: false, message: 'Too many requests' }, { status: 429 });
   }
-
-  const userId = Number(session.user.id);
   const body = await req.json();
   const parsed = withdrawSchema.safeParse(body);
   if (!parsed.success) {
