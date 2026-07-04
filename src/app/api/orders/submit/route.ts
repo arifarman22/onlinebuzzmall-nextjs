@@ -3,7 +3,7 @@ import { getApiUserId } from '@/lib/api-auth';
 import { db } from '@/lib/db';
 import { generateTrx } from '@/lib/utils';
 import { orderSubmitSchema } from '@/lib/validations';
-import { rateLimit, getRateLimitKey } from '@/lib/rate-limit';
+import { rateLimit } from '@/lib/rate-limit';
 
 export async function POST(req: NextRequest) {
   const userId = await getApiUserId(req);
@@ -11,8 +11,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
   }
 
-  const rlKey = getRateLimitKey(req, `order:${userId}`);
-  const rl = rateLimit(rlKey, 30, 60 * 1000);
+  const rl = rateLimit(`order:${userId}`, 30, 60 * 1000);
   if (!rl.success) {
     return NextResponse.json({ success: false, message: 'Too many requests' }, { status: 429 });
   }
