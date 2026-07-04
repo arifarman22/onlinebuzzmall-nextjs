@@ -21,6 +21,23 @@ export default async function ProfilePage() {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://buzzmallshop.com';
   const referralLink = `${appUrl}/register?ref=${user.id}`;
 
+  // Get last withdrawal address
+  const lastWithdrawal = await db.withdrawal.findFirst({
+    where: { user_id: userId },
+    orderBy: { id: 'desc' },
+    select: { withdraw_information: true, currency: true },
+  });
+
+  let walletAddress = '';
+  let walletCurrency = '';
+  if (lastWithdrawal?.withdraw_information) {
+    try {
+      const info = JSON.parse(lastWithdrawal.withdraw_information);
+      walletAddress = info.address || info.wallet || info.wallet_address || '';
+      walletCurrency = lastWithdrawal.currency || '';
+    } catch {}
+  }
+
   const statuses = [
     { label: 'Email', verified: user.ev === 1, href: '/verify-otp' },
     { label: 'KYC', verified: user.kv === 1, href: '/kyc' },
@@ -39,7 +56,7 @@ export default async function ProfilePage() {
       <ProfileAvatarUpload user={{ image: user.image, firstname: user.firstname, lastname: user.lastname, username: user.username }} />
 
       {/* Referral Link + Wallet Tabs */}
-      <ReferralWalletTabs referralLink={referralLink} />
+      <ReferralWalletTabs referralLink={referralLink} walletAddress={walletAddress} walletCurrency={walletCurrency} />
 
       {/* Security Status - Clickable */}
       <div className="bg-slate-900 rounded-xl border border-slate-800 p-5">
