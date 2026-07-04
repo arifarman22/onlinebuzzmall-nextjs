@@ -27,6 +27,7 @@ interface Props {
   todayCommission: number;
   yesterdayCommission: number;
   yesterdayTeamCommission: number;
+  vipUpgradeOnLoad?: { platformId: number; type: 'vip2' | 'vip3' } | null;
 }
 
 function getImageUrl(image: string | null): string | null {
@@ -36,7 +37,8 @@ function getImageUrl(image: string | null): string | null {
   return `/${img}`;
 }
 
-export default function TasksClient({ platform, tasks, userBalance, freezeAmount, todayCommission, yesterdayCommission, yesterdayTeamCommission }: Props) {
+export default function TasksClient({ platform, tasks, userBalance, freezeAmount, todayCommission, yesterdayCommission, yesterdayTeamCommission, vipUpgradeOnLoad }: Props) {
+  const router = useRouter();
   const completedCount = tasks.filter((t) => t.status === 'completed').length;
   const totalCount = tasks.length;
   const pendingTask = tasks.find(t => t.status === 'pending');
@@ -50,6 +52,33 @@ export default function TasksClient({ platform, tasks, userBalance, freezeAmount
     const t = setInterval(() => setTimeStr(new Date().toLocaleTimeString('en-US', { hour12: false })), 1000);
     return () => clearInterval(t);
   }, []);
+
+  // Show VIP upgrade popup immediately if balance already exceeds threshold
+  if (vipUpgradeOnLoad) {
+    const isVip3 = vipUpgradeOnLoad.type === 'vip3';
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+        <div className="bg-white rounded-2xl w-full max-w-xs p-8 shadow-2xl flex flex-col items-center text-center">
+          <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mb-4">
+            <span className="text-3xl">{isVip3 ? '🏆' : '⭐'}</span>
+          </div>
+          <h2 className="text-lg font-bold text-gray-900 mb-2">Congratulations!</h2>
+          <p className="text-sm text-gray-500 mb-1">
+            You are now a <span className="font-semibold text-amber-600">{isVip3 ? 'VIP 3' : 'VIP 2'}</span> customer.
+          </p>
+          <p className="text-sm text-gray-500 mb-6">
+            Please go to the <span className="font-semibold">{isVip3 ? 'AliExpress' : 'AliBaba'}</span> platform to continue completing orders.
+          </p>
+          <button
+            onClick={() => router.push(`/orders/${vipUpgradeOnLoad.platformId}`)}
+            className="w-full py-3 bg-amber-500 text-white text-sm font-semibold rounded-xl hover:bg-amber-600 transition-colors"
+          >
+            Go to {isVip3 ? 'AliExpress VIP 3' : 'AliBaba VIP 2'} →
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">

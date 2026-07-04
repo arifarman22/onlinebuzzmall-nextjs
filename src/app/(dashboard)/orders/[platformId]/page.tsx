@@ -29,11 +29,41 @@ export default async function PlatformTasksPage({ params }: { params: Promise<{ 
     availableBalance >= 500 ? alibabaPlatform?.id :
     amazonPlatform?.id;
 
-  if (correctPlatformId && platId !== correctPlatformId) {
-    redirect(`/orders/${correctPlatformId}`);
+  // Check if user's balance already exceeds a threshold but they're on wrong platform
+  // Pass vipUpgradeOnLoad to show popup immediately
+  let vipUpgradeOnLoad: { platformId: number; type: 'vip2' | 'vip3' } | null = null;
+  const platformNameLower = platform.name.toLowerCase();
+  if (availableBalance >= 900 && aliexpressPlatform && platId !== aliexpressPlatform.id) {
+    vipUpgradeOnLoad = { platformId: aliexpressPlatform.id, type: 'vip3' };
+  } else if (availableBalance >= 500 && alibabaPlatform && platId !== alibabaPlatform.id && !platformNameLower.includes('alibaba') && !platformNameLower.includes('aliexpress')) {
+    vipUpgradeOnLoad = { platformId: alibabaPlatform.id, type: 'vip2' };
   }
 
-  // Get all assignments for this platform, pick the first incomplete one
+  // If user is on wrong platform, migrate order set now and show popup
+  if (vipUpgradeOnLoad) {
+    const targetPlatformId = vipUpgradeOnLoad.platformId;
+    const targetPlatform = vipUpgradeOnLoad.type === 'vip3' ? aliexpressPlatform : alibabaPlatform;
+    const activeAssignment = await db.orderSetAssign.findFirst({
+      where: { user_id: userId, percentage_completed: { lt: 100 } },
+      select: { order_set_id: true },
+      orderBy: { id: 'asc' },
+    });
+    if (activeAssignment && targetPlatform) {
+      const completedIds = await db.orderComplete.findMany({
+        where: { user_id: userId, order_set_id: activeAssignment.order_set_id, status: 1 },
+        select: { order_id: true },
+      });
+      const ids = completedIds.map((c) => c.order_id);
+      const tp = await db.platform.findUnique({ where: { id: targetPlatformId }, select: { commission: true } });
+      await Promise.all([
+        db.orderSet.update({ where: { id: activeAssignment.order_set_id }, data: { platform_id: targetPlatformId } }),
+        db.order.updateMany({
+          where: { order_set_id: activeAssignment.order_set_id, id: { notIn: ids.length ? ids : [-1] } },
+          data: { platform_id: targetPlatformId, profit: tp?.commission ?? 0 },
+        }),
+      ]);
+    }
+  }
   const allAssignments = await db.orderSetAssign.findMany({
     where: { user_id: userId, orderSet: { platform_id: platId } },
     include: { orderSet: { include: { orders: { orderBy: { id: 'asc' }, include: { orderDetails: { include: { product: true } } } } } } },
@@ -122,6 +152,7 @@ export default async function PlatformTasksPage({ params }: { params: Promise<{ 
       todayCommission={todayCommission}
       yesterdayCommission={yesterdayCommission}
       yesterdayTeamCommission={teamCommission._sum.amount || 0}
+      vipUpgradeOnLoad={vipUpgradeOnLoad}
     />
   );
 }
