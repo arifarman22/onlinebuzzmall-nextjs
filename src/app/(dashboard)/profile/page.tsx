@@ -2,13 +2,14 @@ import { getSessionUser } from '@/lib/session';
 import { db } from '@/lib/db';
 import { formatDate } from '@/lib/utils';
 import {
-  Shield, CheckCircle, AlertCircle,
+  Shield, CheckCircle, AlertCircle, ArrowDownCircle, ArrowUpCircle,
 } from 'lucide-react';
 import Link from 'next/link';
 import ProfileForm from '@/components/dashboard/ProfileForm';
 import LogoutButton from '@/components/dashboard/LogoutButton';
 import ProfileAvatarUpload from '@/components/dashboard/ProfileAvatarUpload';
 import CopyButton from '@/components/dashboard/CopyButton';
+import ReferralWalletTabs from '@/components/dashboard/ReferralWalletTabs';
 
 export default async function ProfilePage() {
   const user0 = await getSessionUser();
@@ -37,18 +38,8 @@ export default async function ProfilePage() {
       {/* Profile Header Card */}
       <ProfileAvatarUpload user={{ image: user.image, firstname: user.firstname, lastname: user.lastname, username: user.username }} />
 
-      {/* Referral Link */}
-      <div className="bg-slate-900 rounded-xl border border-slate-800 p-5">
-        <div className="flex items-center gap-2 mb-3">
-          <Shield size={16} className="text-violet-400" />
-          <h3 className="text-sm font-semibold text-white">Your Referral Link</h3>
-        </div>
-        <div className="flex items-center gap-2 p-3 bg-slate-800 rounded-lg border border-slate-700">
-          <input type="text" readOnly value={referralLink} className="flex-1 bg-transparent text-xs text-slate-300 outline-none truncate font-mono" />
-          <CopyButton text={referralLink} />
-        </div>
-        <p className="text-xs text-slate-500 mt-2">Share this link to invite others and earn referral commissions.</p>
-      </div>
+      {/* Referral Link + Wallet Tabs */}
+      <ReferralWalletTabs referralLink={referralLink} />
 
       {/* Security Status - Clickable */}
       <div className="bg-slate-900 rounded-xl border border-slate-800 p-5">
