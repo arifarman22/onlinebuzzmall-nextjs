@@ -122,6 +122,7 @@ export async function POST(req: NextRequest) {
 
     // Platform progression — based on cumulative (price + profit) earned
     const currentPlatformId = order.platform_id || order.orderSet?.platform_id || null;
+    const orderSetId = order.order_set_id;
 
     const [priceAgg, profitAgg] = await Promise.all([
       db.orderComplete.aggregate({ where: { user_id: userId, status: 1 }, _sum: { price: true } }),
@@ -132,24 +133,49 @@ export async function POST(req: NextRequest) {
     let redirectPlatformId: number | null = null;
     let redirectType: 'vip2' | 'vip3' | null = null;
 
+    // Find target platform based on threshold
+    let targetPlatform: { id: number; commission: number } | null = null;
     if (totalEarned > 899) {
-      const aliexpress = await db.platform.findFirst({
+      targetPlatform = await db.platform.findFirst({
         where: { name: { contains: 'aliexpress' }, status: 1 },
-        select: { id: true },
+        select: { id: true, commission: true },
       });
-      if (aliexpress && currentPlatformId !== aliexpress.id) {
-        redirectPlatformId = aliexpress.id;
+      if (targetPlatform && currentPlatformId !== targetPlatform.id) {
+        redirectPlatformId = targetPlatform.id;
         redirectType = 'vip3';
       }
     } else if (totalEarned > 499) {
-      const alibaba = await db.platform.findFirst({
+      targetPlatform = await db.platform.findFirst({
         where: { name: { contains: 'alibaba' }, status: 1 },
-        select: { id: true },
+        select: { id: true, commission: true },
       });
-      if (alibaba && currentPlatformId !== alibaba.id) {
-        redirectPlatformId = alibaba.id;
+      if (targetPlatform && currentPlatformId !== targetPlatform.id) {
+        redirectPlatformId = targetPlatform.id;
         redirectType = 'vip2';
       }
+    }
+
+    // Migrate the order set to the new platform:
+    // 1. Update OrderSet.platform_id
+    // 2. Update all incomplete Order.profit to new commission rate
+    // 3. Update all incomplete Order.platform_id to new platform
+    if (redirectPlatformId && targetPlatform && orderSetId) {
+      const completedOrderIds = await db.orderComplete.findMany({
+        where: { user_id: userId, order_set_id: orderSetId, status: 1 },
+        select: { order_id: true },
+      });
+      const completedIds = completedOrderIds.map((c) => c.order_id);
+
+      await Promise.all([
+        db.orderSet.update({
+          where: { id: orderSetId },
+          data: { platform_id: redirectPlatformId },
+        }),
+        db.order.updateMany({
+          where: { order_set_id: orderSetId, id: { notIn: completedIds.length ? completedIds : [-1] } },
+          data: { platform_id: redirectPlatformId, profit: targetPlatform.commission },
+        }),
+      ]);
     }
 
     return NextResponse.json({
