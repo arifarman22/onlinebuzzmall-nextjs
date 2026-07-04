@@ -37,13 +37,8 @@ function checkRateLimit(ip: string, limit: number, windowMs: number): { allowed:
     return { allowed: true, remaining: limit - 1 };
   }
 
-  if (entry.blocked) return { allowed: false, remaining: 0 };
-
   entry.count++;
-  if (entry.count > limit) {
-    entry.blocked = true;
-    return { allowed: false, remaining: 0 };
-  }
+  if (entry.count > limit) return { allowed: false, remaining: 0 };
 
   return { allowed: true, remaining: limit - entry.count };
 }
@@ -103,14 +98,14 @@ export function securityMiddleware(req: NextRequest): NextResponse | null {
   const isAuthEndpoint = pathname.includes('/api/auth') || pathname.includes('/login');
   const isApiEndpoint = pathname.startsWith('/api/');
 
-  let limit = 200; // default: 200 req/min
+  let limit = 300; // default: 300 req/min
   let window = 60000;
 
   if (isAuthEndpoint) {
     limit = 20; // auth: 20 req/min
     window = 60000;
   } else if (isApiEndpoint) {
-    limit = 120; // API: 120 req/min
+    limit = 300; // API: 300 req/min per IP
     window = 60000;
   }
 
