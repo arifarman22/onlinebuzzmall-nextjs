@@ -24,13 +24,8 @@ export default async function PlatformTasksPage({ params }: { params: Promise<{ 
     db.platform.findFirst({ where: { name: { contains: 'AliExpress' }, status: 1 }, select: { id: true } }),
   ]);
 
-  const correctPlatformId =
-    availableBalance >= 900 ? aliexpressPlatform?.id :
-    availableBalance >= 500 ? alibabaPlatform?.id :
-    amazonPlatform?.id;
-
   // Check if user's balance already exceeds a threshold but they're on wrong platform
-  // Pass vipUpgradeOnLoad to show popup immediately
+  // Show popup instead of hard redirect so user sees the congratulations message
   let vipUpgradeOnLoad: { platformId: number; type: 'vip2' | 'vip3' } | null = null;
   const platformNameLower = platform.name.toLowerCase();
   if (availableBalance >= 900 && aliexpressPlatform && platId !== aliexpressPlatform.id) {
@@ -64,8 +59,9 @@ export default async function PlatformTasksPage({ params }: { params: Promise<{ 
       ]);
     }
   }
+  // Get all assignments for this user (not filtered by platform — order set may have been migrated)
   const allAssignments = await db.orderSetAssign.findMany({
-    where: { user_id: userId, orderSet: { platform_id: platId } },
+    where: { user_id: userId },
     include: { orderSet: { include: { orders: { orderBy: { id: 'asc' }, include: { orderDetails: { include: { product: true } } } } } } },
     orderBy: { id: 'asc' },
   });
