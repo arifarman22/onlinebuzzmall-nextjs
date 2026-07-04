@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, CheckCircle, Clock, Loader2, ShoppingCart, Wallet, X } from 'lucide-react';
+import { ArrowLeft, CheckCircle, Loader2, ShoppingCart, Wallet, X } from 'lucide-react';
 import { formatAmount } from '@/lib/utils';
 import Link from 'next/link';
 
@@ -109,7 +109,7 @@ export default function TasksClient({ platform, tasks, userBalance, freezeAmount
       <div className="bg-white rounded-2xl border border-gray-200 p-4">
         <div className="grid grid-cols-2 gap-y-4 gap-x-3">
           {[
-            { label: "Today's Time", value: timeStr },
+            { label: 'Tasks Completed', value: `${completedCount} / ${totalCount}` },
             { label: "Today's Commission", value: `${formatAmount(todayCommission)} USDT` },
             { label: 'Cash Gap', value: `${formatAmount(cashGap)} USDT`, highlight: cashGap > 0 },
             { label: "Yesterday's Commission", value: `${formatAmount(yesterdayCommission)} USDT` },
