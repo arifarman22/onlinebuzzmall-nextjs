@@ -19,9 +19,9 @@ export default async function PlatformTasksPage({ params }: { params: Promise<{ 
   // Redirect based on user's available balance tier
   const availableBalance = user.balance - user.freeze_amount;
   const [amazonPlatform, alibabaPlatform, aliexpressPlatform] = await Promise.all([
-    db.platform.findFirst({ where: { name: { contains: 'amazon' }, status: 1 }, select: { id: true } }),
-    db.platform.findFirst({ where: { name: { contains: 'alibaba' }, status: 1 }, select: { id: true } }),
-    db.platform.findFirst({ where: { name: { contains: 'aliexpress' }, status: 1 }, select: { id: true } }),
+    db.platform.findFirst({ where: { name: { contains: 'Amazon' }, status: 1 }, select: { id: true } }),
+    db.platform.findFirst({ where: { name: { contains: 'AliBaba' }, status: 1 }, select: { id: true } }),
+    db.platform.findFirst({ where: { name: { contains: 'AliExpress' }, status: 1 }, select: { id: true } }),
   ]);
 
   const correctPlatformId =

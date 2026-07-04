@@ -50,9 +50,9 @@ export async function POST(req: NextRequest) {
 
     // Determine correct platform based on user's available balance
     const availableBalance = user.balance - user.freeze_amount;
-    let targetPlatformName = 'amazon';
-    if (availableBalance >= 900) targetPlatformName = 'aliexpress';
-    else if (availableBalance >= 500) targetPlatformName = 'alibaba';
+    let targetPlatformName = 'Amazon';
+    if (availableBalance >= 900) targetPlatformName = 'AliExpress';
+    else if (availableBalance >= 500) targetPlatformName = 'AliBaba';
 
     const targetPlatform = await db.platform.findFirst({
       where: { name: { contains: targetPlatformName }, status: 1 },

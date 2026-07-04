@@ -131,7 +131,7 @@ export async function POST(req: NextRequest) {
 
     if (threshold >= 900) {
       targetPlatform = await db.platform.findFirst({
-        where: { name: { contains: 'aliexpress' }, status: 1 },
+        where: { name: { contains: 'AliExpress' }, status: 1 },
         select: { id: true, commission: true },
       });
       if (targetPlatform && currentPlatformId !== targetPlatform.id) {
@@ -140,7 +140,7 @@ export async function POST(req: NextRequest) {
       }
     } else if (threshold >= 500) {
       targetPlatform = await db.platform.findFirst({
-        where: { name: { contains: 'alibaba' }, status: 1 },
+        where: { name: { contains: 'AliBaba' }, status: 1 },
         select: { id: true, commission: true },
       });
       if (targetPlatform && currentPlatformId !== targetPlatform.id) {
