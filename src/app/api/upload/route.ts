@@ -40,10 +40,9 @@ export async function POST(req: NextRequest) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
 
-  const rl = rateLimit(`upload:${userId}`, 8, 60 * 1000);
-  if (!rl.success) return NextResponse.json({ success: false, message: 'Too many uploads' }, { status: 429 });
-
   const userId = Number(session.user.id);
+
+  const rl = rateLimit(`upload:${userId}`, 8, 60 * 1000);
 
   try {
     const formData = await req.formData();
