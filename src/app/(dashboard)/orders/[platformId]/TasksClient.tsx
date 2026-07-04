@@ -159,6 +159,9 @@ function ActiveTaskCard({ task, platformId, userBalance, freezeAmount }: {
   const [vipUpgrade, setVipUpgrade] = useState<{ platformId: number; type: 'vip2' | 'vip3' } | null>(null);
   const [orderNo, setOrderNo] = useState<string | null>(task.orderNo);
   const [orderCompleteId, setOrderCompleteId] = useState<number | null>(task.orderCompleteId);
+  const [livePrice, setLivePrice] = useState<number>(task.price);
+  const [liveProfit, setLiveProfit] = useState<number>(task.profit);
+  const [liveProfitPercent, setLiveProfitPercent] = useState<number>(task.profitPercent);
 
   const availableBalance = userBalance - freezeAmount;
   const canAfford = availableBalance >= task.price;
@@ -175,9 +178,11 @@ function ActiveTaskCard({ task, platformId, userBalance, freezeAmount }: {
       });
       const data = await res.json();
       if (data.success) {
-        // Store the order info from response and show confirm modal immediately
         setOrderCompleteId(data.order_complete_id);
         setOrderNo(data.order_no);
+        if (data.price !== undefined) setLivePrice(data.price);
+        if (data.profit !== undefined) setLiveProfit(data.profit);
+        if (data.profit_percent !== undefined) setLiveProfitPercent(data.profit_percent);
         setShowConfirm(true);
       } else {
         setMessage(data.message || 'Failed to start');
@@ -364,15 +369,15 @@ function ActiveTaskCard({ task, platformId, userBalance, freezeAmount }: {
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-gray-500">Order Amount</span>
-                <span className="text-sm text-gray-900">{formatAmount(task.price)} USDT</span>
+                <span className="text-sm text-gray-900">{formatAmount(livePrice)} USDT</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-500">Commission ({task.profitPercent}%)</span>
-                <span className="text-sm text-gray-900">+{formatAmount(task.profit)} USDT</span>
+                <span className="text-sm text-gray-500">Commission ({liveProfitPercent}%)</span>
+                <span className="text-sm text-gray-900">+{formatAmount(liveProfit)} USDT</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-gray-500">Expected Income</span>
-                <span className="text-sm font-semibold text-indigo-600">{formatAmount(task.price + task.profit)} USDT</span>
+                <span className="text-sm font-semibold text-indigo-600">{formatAmount(livePrice + liveProfit)} USDT</span>
               </div>
             </div>
 

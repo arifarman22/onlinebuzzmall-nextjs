@@ -62,6 +62,8 @@ export async function POST(req: NextRequest) {
     const user = await db.user.findUnique({ where: { id: userId } });
     const details = await db.orderDetail.findMany({ where: { order_id: nextOrder.id } });
     const price = details.reduce((sum, d) => sum + d.price * d.quantity, 0);
+    const profitPercent = nextOrder.profit;
+    const profit = price * (profitPercent / 100);
 
     await db.orderComplete.create({
       data: {
@@ -83,7 +85,16 @@ export async function POST(req: NextRequest) {
       orderBy: { id: 'desc' },
     });
 
-    return NextResponse.json({ success: true, message: 'Order started successfully.', order_complete_id: created?.id, order_no: created?.order_no });
+    return NextResponse.json({
+      success: true,
+      message: 'Order started successfully.',
+      order_complete_id: created?.id,
+      order_no: created?.order_no,
+      price,
+      profit,
+      profit_percent: profitPercent,
+      order_type: nextOrder.type,
+    });
   } catch (error: any) {
     return NextResponse.json({ success: false, message: error.message || 'Failed to start order' }, { status: 500 });
   }
