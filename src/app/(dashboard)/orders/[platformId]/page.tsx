@@ -16,12 +16,12 @@ export default async function PlatformTasksPage({ params }: { params: Promise<{ 
   const platform = await db.platform.findUnique({ where: { id: platId } });
   if (!platform) redirect('/orders');
 
-  // Cumulative earned (price + profit) — determines platform progression
-  const [cumulativePriceAgg, cumulativeProfitAgg] = await Promise.all([
-    db.orderComplete.aggregate({ where: { user_id: userId, status: 1 }, _sum: { price: true } }),
-    db.orderComplete.aggregate({ where: { user_id: userId, status: 1 }, _sum: { profit: true } }),
-  ]);
-  const cumulativeTotal = Number(cumulativePriceAgg._sum.price || 0) + Number(cumulativeProfitAgg._sum.profit || 0);
+  // Threshold = current balance + cumulative profit earned
+  const cumulativeProfitAgg = await db.orderComplete.aggregate({
+    where: { user_id: userId, status: 1 },
+    _sum: { profit: true },
+  });
+  const cumulativeTotal = user.balance + Number(cumulativeProfitAgg._sum.profit || 0);
 
   // Determine which platform the user should be on based on cumulative total
   const [alibabaPlatform, aliexpressPlatform] = await Promise.all([

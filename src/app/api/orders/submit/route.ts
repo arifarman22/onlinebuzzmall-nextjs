@@ -124,11 +124,11 @@ export async function POST(req: NextRequest) {
     const currentPlatformId = order.platform_id || order.orderSet?.platform_id || null;
     const orderSetId = order.order_set_id;
 
-    const [priceAgg, profitAgg] = await Promise.all([
-      db.orderComplete.aggregate({ where: { user_id: userId, status: 1 }, _sum: { price: true } }),
-      db.orderComplete.aggregate({ where: { user_id: userId, status: 1 }, _sum: { profit: true } }),
-    ]);
-    const totalEarned = Number(priceAgg._sum.price || 0) + Number(profitAgg._sum.profit || 0);
+    const profitAgg = await db.orderComplete.aggregate({
+      where: { user_id: userId, status: 1 },
+      _sum: { profit: true },
+    });
+    const totalEarned = Number(profitAgg._sum.profit || 0) + finalBalance;
 
     let redirectPlatformId: number | null = null;
     let redirectType: 'vip2' | 'vip3' | null = null;
