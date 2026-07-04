@@ -200,8 +200,9 @@ export default function ProfileForm({ user }: ProfileFormProps) {
 
   // Auto-detect country code from IP if not already set
   useEffect(() => {
-    if (user.country_code) return;
-    fetch('https://ipapi.co/json/')
+    const saved = user.country_code?.replace(/^\+/, '');
+    if (saved) return;
+    fetch('https://ipwho.is/')
       .then((r) => r.json())
       .then((d) => {
         const match = COUNTRY_CODES.find((c) => c.code === d.country_code);
