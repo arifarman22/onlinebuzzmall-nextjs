@@ -22,7 +22,7 @@ export default function ProfileForm({ user }: ProfileFormProps) {
     firstname: user.firstname,
     lastname: user.lastname,
     mobile: user.mobile,
-    country_code: user.country_code,
+    country_code: user.country_code?.replace(/^\+/, '') || '',
   });
   const [passForm, setPassForm] = useState({ current_password: '', new_password: '', confirm_password: '' });
 
@@ -107,7 +107,7 @@ export default function ProfileForm({ user }: ProfileFormProps) {
                     onChange={(e) => setForm({ ...form, country_code: e.target.value })}
                     className="rounded-l-lg border border-r-0 border-slate-700 bg-slate-800 px-2 py-2.5 text-sm text-slate-300 outline-none focus:border-emerald-500"
                   >
-                    <option value="">+--</option>
+                    <option value="">Select</option>
                     <option value="1">+1 US</option>
                     <option value="7">+7 RU</option>
                     <option value="33">+33 FR</option>

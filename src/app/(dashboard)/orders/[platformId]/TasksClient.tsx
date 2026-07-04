@@ -44,8 +44,12 @@ export default function TasksClient({ platform, tasks, userBalance, freezeAmount
   const activeTask = pendingTask || nextLockedTask;
   const cashGap = activeTask && userBalance < activeTask.price ? activeTask.price - userBalance : 0;
 
-  const now = new Date();
-  const timeStr = now.toLocaleTimeString('en-US', { hour12: false });
+  const [timeStr, setTimeStr] = useState('');
+  useEffect(() => {
+    setTimeStr(new Date().toLocaleTimeString('en-US', { hour12: false }));
+    const t = setInterval(() => setTimeStr(new Date().toLocaleTimeString('en-US', { hour12: false })), 1000);
+    return () => clearInterval(t);
+  }, []);
 
   return (
     <div className="space-y-4">
@@ -291,7 +295,7 @@ function ActiveTaskCard({ task, platformId, userBalance, freezeAmount }: {
             <div className="px-5 py-4 space-y-3 border-t border-gray-100 mt-4">
               <div className="flex justify-between items-center">
                 <span className="text-sm text-gray-500">Transaction Time</span>
-                <span className="text-sm text-gray-900">{new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+                <span className="text-sm text-gray-900">{typeof window !== 'undefined' ? new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : ''}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-gray-500">Order Amount</span>
