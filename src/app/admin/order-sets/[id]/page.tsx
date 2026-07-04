@@ -51,6 +51,10 @@ export default function ManageOrderSetPage() {
   const [showComboOrder, setShowComboOrder] = useState(false);
   const [showCsvUpload, setShowCsvUpload] = useState(false);
 
+  // Inline profit edit
+  const [editingOrderId, setEditingOrderId] = useState<number | null>(null);
+  const [editingProfit, setEditingProfit] = useState('');
+
   // Add Order form
   const [orderForm, setOrderForm] = useState({ platform_id: '', product_id: '', profit: '5', price: 0, quantity: '1' });
 
@@ -144,6 +148,24 @@ export default function ManageOrderSetPage() {
       });
       const data = await res.json();
       if (data.success) { showMessage('success', 'Combo order added'); setShowComboOrder(false); setComboForm({ platform_id: '', profit: '5', products: [{ product_id: '' }] }); fetchData(); }
+      else showMessage('error', data.message);
+    } catch { showMessage('error', 'Failed'); }
+    setSaving(false);
+  };
+
+  // Inline profit save
+  const handleSaveProfit = async (orderId: number) => {
+    const profit = parseFloat(editingProfit);
+    if (isNaN(profit)) return;
+    setSaving(true);
+    try {
+      const res = await fetch('/api/admin/order-sets/update-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ order_id: orderId, profit }),
+      });
+      const data = await res.json();
+      if (data.success) { setEditingOrderId(null); fetchData(); }
       else showMessage('error', data.message);
     } catch { showMessage('error', 'Failed'); }
     setSaving(false);
@@ -263,7 +285,26 @@ export default function ManageOrderSetPage() {
                         </td>
                         <td className="py-3 px-4 text-gray-700 max-w-[150px] truncate">{productNames || '-'}</td>
                         <td className="py-3 px-4 font-medium">${totalPrice.toFixed(2)}</td>
-                        <td className="py-3 px-4 text-indigo-600">{order.profit}%</td>
+                        <td className="py-3 px-4 text-indigo-600">
+                          {editingOrderId === order.id ? (
+                            <div className="flex items-center gap-1">
+                              <input
+                                type="number" step="0.01" autoFocus
+                                value={editingProfit}
+                                onChange={(e) => setEditingProfit(e.target.value)}
+                                onKeyDown={(e) => { if (e.key === 'Enter') handleSaveProfit(order.id); if (e.key === 'Escape') setEditingOrderId(null); }}
+                                className="w-16 px-1.5 py-0.5 border border-indigo-400 rounded text-xs focus:outline-none"
+                              />
+                              <button onClick={() => handleSaveProfit(order.id)} disabled={saving} className="text-xs text-emerald-600 font-medium hover:underline">Save</button>
+                              <button onClick={() => setEditingOrderId(null)} className="text-xs text-gray-400 hover:underline">✕</button>
+                            </div>
+                          ) : (
+                            <span className="flex items-center gap-1 cursor-pointer group" onClick={() => { setEditingOrderId(order.id); setEditingProfit(String(order.profit)); }}>
+                              {order.profit}%
+                              <Edit2 size={11} className="text-gray-300 group-hover:text-indigo-400" />
+                            </span>
+                          )}
+                        </td>
                         <td className="py-3 px-4 text-emerald-600">${profitAmt.toFixed(2)}</td>
                         <td className="py-3 px-4 font-bold">${(totalPrice + profitAmt).toFixed(2)}</td>
                         <td className="py-3 px-4">
