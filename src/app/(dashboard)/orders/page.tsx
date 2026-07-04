@@ -30,8 +30,12 @@ export default async function OrdersPage() {
   // Threshold = user's current balance (grows with each profit earned)
   const threshold = user.balance;
 
-  // Filter platforms by threshold — only show what user has unlocked
+  // Platforms the user has active assignments on
+  const assignedPlatformIds = new Set(assignments.map((a) => a.orderSet?.platform?.id).filter(Boolean));
+
+  // Show platform if: user has an assignment on it OR balance threshold is met
   const allPlatforms = platforms.filter((p) => {
+    if (assignedPlatformIds.has(p.id)) return true; // always show if assigned
     const nameLower = p.name.toLowerCase();
     if (nameLower.includes('aliexpress')) return threshold > 899;
     if (nameLower.includes('alibaba')) return threshold > 499;

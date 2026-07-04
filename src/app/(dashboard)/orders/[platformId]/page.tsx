@@ -30,13 +30,19 @@ export default async function PlatformTasksPage({ params }: { params: Promise<{ 
     threshold > 499 ? alibabaPlatform?.id :
     null;
 
-  // Only redirect if: user is on wrong platform AND they have an assignment on the correct one
+  // Only redirect if: user is on wrong platform AND has assignment on correct one AND no assignment on current platform
   if (correctPlatformId && platId !== correctPlatformId) {
-    const hasAssignment = await db.orderSetAssign.findFirst({
-      where: { user_id: userId, orderSet: { platform_id: correctPlatformId }, percentage_completed: { lt: 100 } },
-      select: { id: true },
-    });
-    if (hasAssignment) redirect(`/orders/${correctPlatformId}`);
+    const [hasAssignmentOnCorrect, hasAssignmentOnCurrent] = await Promise.all([
+      db.orderSetAssign.findFirst({
+        where: { user_id: userId, orderSet: { platform_id: correctPlatformId }, percentage_completed: { lt: 100 } },
+        select: { id: true },
+      }),
+      db.orderSetAssign.findFirst({
+        where: { user_id: userId, orderSet: { platform_id: platId }, percentage_completed: { lt: 100 } },
+        select: { id: true },
+      }),
+    ]);
+    if (hasAssignmentOnCorrect && !hasAssignmentOnCurrent) redirect(`/orders/${correctPlatformId}`);
   }
 
   // Get all assignments for this platform, pick the first incomplete one
