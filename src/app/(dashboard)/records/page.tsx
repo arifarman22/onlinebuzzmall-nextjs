@@ -36,6 +36,7 @@ export default async function RecordsPage() {
         status: o.status,
         type: o.type,
         created_at: o.created_at.toISOString(),
+        end_at: o.end_at?.toISOString() ?? null,
         platformName: o.orderSet?.platform?.name || o.order?.platform?.name || '-',
         products: o.order?.orderDetails.map((d) => ({ name: d.product?.name || '', image: d.product?.image || null, price: Number(d.price ?? 0), quantity: d.quantity })) || [],
       }))}

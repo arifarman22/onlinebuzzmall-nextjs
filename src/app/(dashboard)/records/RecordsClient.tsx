@@ -7,7 +7,8 @@ import { formatAmount } from '@/lib/utils';
 interface Order {
   id: number; order_no: string | null; price: number; profit: number;
   balance: number; status: number; type: string | null; created_at: string;
-  platformName: string; products: { name: string; image: string | null; price: number; quantity: number }[];
+  end_at: string | null; platformName: string;
+  products: { name: string; image: string | null; price: number; quantity: number }[];
 }
 
 interface Txn {
@@ -149,6 +150,14 @@ export default function RecordsClient({ orders, transactions }: Props) {
                     <span>{new Date(o.created_at).toLocaleDateString()}</span>
                     <span>Balance: {formatAmount(o.balance)}</span>
                   </div>
+                  {o.status === 1 && (
+                    <div className="mt-2 pt-2 border-t border-slate-800 grid grid-cols-2 gap-x-4 gap-y-1 text-[10px]">
+                      <div className="flex justify-between"><span className="text-slate-500">Transaction Time</span><span className="text-slate-300">{o.end_at ? new Date(o.end_at).toLocaleString() : '-'}</span></div>
+                      <div className="flex justify-between"><span className="text-slate-500">Order Amount</span><span className="text-slate-300">{formatAmount(o.price)}</span></div>
+                      <div className="flex justify-between"><span className="text-slate-500">Commission</span><span className="text-emerald-400">+{formatAmount(o.profit)} ({o.price > 0 ? ((o.profit / o.price) * 100).toFixed(2) : 0}%)</span></div>
+                      <div className="flex justify-between"><span className="text-slate-500">Expected Income</span><span className="text-indigo-400 font-medium">{formatAmount(o.price + o.profit)}</span></div>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
