@@ -57,7 +57,7 @@ export default function ManageOrderSetPage() {
 
   // Edit order modal
   const [editOrderModal, setEditOrderModal] = useState<Order | null>(null);
-  const [editOrderForm, setEditOrderForm] = useState<{ profit: string; platform_id: string; type: string; products: { product_id: string; quantity: string; price: string }[] }>({ profit: '', platform_id: '', type: 'single', products: [] });
+  const [editOrderForm, setEditOrderForm] = useState<{ profit: string; platform_id: string; type: string; status: string; products: { product_id: string; quantity: string; price: string }[] }>({ profit: '', platform_id: '', type: 'single', status: '1', products: [] });
 
   // Add Order form
   const [orderForm, setOrderForm] = useState({ platform_id: '', product_id: '', profit: '5', price: 0, quantity: '1' });
@@ -190,6 +190,7 @@ export default function ManageOrderSetPage() {
           order_id: editOrderModal.id,
           profit: Number(editOrderForm.profit),
           type: editOrderForm.type,
+          status: Number(editOrderForm.status),
           product_ids: productIds,
           quantities: editOrderForm.products.filter((p) => p.product_id).map((p) => Number(p.quantity) || 1),
           prices: editOrderForm.products.filter((p) => p.product_id).map((p) => Number(p.price) || 0),
@@ -382,6 +383,7 @@ export default function ManageOrderSetPage() {
                                   profit: String(order.profit),
                                   platform_id: '',
                                   type: order.type || 'single',
+                                  status: String(order.status),
                                   products: order.orderDetails.map((d) => ({ product_id: String(d.product.id), quantity: String(d.quantity), price: String(d.price) })),
                                 });
                               }}
@@ -403,94 +405,133 @@ export default function ManageOrderSetPage() {
       {/* Edit Order Modal */}
       {editOrderModal && (
         <Modal title={`Edit Order #${editOrderModal.id}`} onClose={() => setEditOrderModal(null)}>
-          <form onSubmit={handleEditOrderSave} className="space-y-4">
+          <form onSubmit={handleEditOrderSave} className="space-y-5">
+
+            {/* Order Type */}
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Order Type</label>
+              <label className="block text-xs font-semibold text-gray-700 mb-1.5">Order Type</label>
               <div className="flex gap-2">
                 {(['single', 'combo'] as const).map((t) => (
-                  <button
-                    key={t} type="button"
-                    onClick={() => setEditOrderForm((f) => ({
-                      ...f, type: t,
-                      products: t === 'single' ? [f.products[0] || { product_id: '', quantity: '1', price: '' }] : f.products,
-                    }))}
-                    className={`flex-1 py-2 text-xs font-medium rounded-lg border transition-colors ${
+                  <button key={t} type="button"
+                    onClick={() => setEditOrderForm((f) => ({ ...f, type: t, products: t === 'single' ? [f.products[0] || { product_id: '', quantity: '1', price: '' }] : f.products }))}
+                    className={`flex-1 py-2.5 text-xs font-semibold rounded-xl border-2 transition-colors ${
                       editOrderForm.type === t
                         ? t === 'combo' ? 'bg-purple-600 text-white border-purple-600' : 'bg-indigo-600 text-white border-indigo-600'
-                        : 'border-gray-200 text-gray-600 hover:bg-gray-50'
-                    }`}
-                  >
-                    {t === 'combo' ? 'Combo' : 'Single'}
+                        : 'border-gray-200 text-gray-500 hover:border-gray-300'
+                    }`}>
+                    {t === 'combo' ? '🔗 Combo' : '📦 Single'}
                   </button>
                 ))}
               </div>
             </div>
+
+            {/* Status */}
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Profit %</label>
-              <input type="number" step="0.01" value={editOrderForm.profit} onChange={(e) => setEditOrderForm({ ...editOrderForm, profit: e.target.value })} className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm bg-gray-50 focus:outline-none focus:border-indigo-500" required />
+              <label className="block text-xs font-semibold text-gray-700 mb-1.5">Status</label>
+              <div className="flex gap-2">
+                {[{ val: '1', label: '✅ Active' }, { val: '0', label: '⏸ Disabled' }].map((s) => (
+                  <button key={s.val} type="button"
+                    onClick={() => setEditOrderForm((f) => ({ ...f, status: s.val }))}
+                    className={`flex-1 py-2.5 text-xs font-semibold rounded-xl border-2 transition-colors ${
+                      editOrderForm.status === s.val
+                        ? s.val === '1' ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-gray-500 text-white border-gray-500'
+                        : 'border-gray-200 text-gray-500 hover:border-gray-300'
+                    }`}>
+                    {s.label}
+                  </button>
+                ))}
+              </div>
             </div>
+
+            {/* Profit % */}
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Platform (filter products)</label>
-              <select value={editOrderForm.platform_id} onChange={(e) => setEditOrderForm({ ...editOrderForm, platform_id: e.target.value })} className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm bg-gray-50 focus:outline-none focus:border-indigo-500">
+              <label className="block text-xs font-semibold text-gray-700 mb-1.5">Profit %</label>
+              <input type="number" step="0.01" value={editOrderForm.profit}
+                onChange={(e) => setEditOrderForm({ ...editOrderForm, profit: e.target.value })}
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm bg-gray-50 focus:outline-none focus:border-indigo-500" required />
+            </div>
+
+            {/* Platform filter */}
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 mb-1.5">Filter Products by Platform</label>
+              <select value={editOrderForm.platform_id} onChange={(e) => setEditOrderForm({ ...editOrderForm, platform_id: e.target.value })}
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm bg-gray-50 focus:outline-none focus:border-indigo-500">
                 <option value="">All Platforms</option>
                 {platforms.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
               </select>
             </div>
+
+            {/* Products */}
             <div>
               <div className="flex items-center justify-between mb-2">
-                <label className="block text-xs font-medium text-gray-700">Products</label>
+                <label className="block text-xs font-semibold text-gray-700">Products</label>
                 {editOrderForm.type === 'combo' && (
-                  <button type="button" onClick={() => setEditOrderForm({ ...editOrderForm, products: [...editOrderForm.products, { product_id: '', quantity: '1', price: '' }] })} className="text-xs text-indigo-600 hover:underline">+ Add</button>
+                  <button type="button" onClick={() => setEditOrderForm({ ...editOrderForm, products: [...editOrderForm.products, { product_id: '', quantity: '1', price: '' }] })}
+                    className="text-xs text-indigo-600 font-medium hover:underline">+ Add Product</button>
                 )}
               </div>
-              <div className="space-y-2">
+              <div className="space-y-3">
                 {editOrderForm.products.map((ep, idx) => {
                   const filtered = editOrderForm.platform_id ? products.filter((p) => p.platform_id === Number(editOrderForm.platform_id)) : products;
                   return (
-                    <div key={idx} className="flex items-center gap-2">
-                      <select
-                        value={ep.product_id}
+                    <div key={idx} className="p-3 bg-gray-50 rounded-xl border border-gray-100 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-medium text-gray-500">Product {idx + 1}</span>
+                        {editOrderForm.products.length > 1 && (
+                          <button type="button" onClick={() => setEditOrderForm({ ...editOrderForm, products: editOrderForm.products.filter((_, i) => i !== idx) })} className="text-red-400 hover:text-red-600"><Trash2 size={13} /></button>
+                        )}
+                      </div>
+                      <select value={ep.product_id}
                         onChange={(e) => {
                           const u = [...editOrderForm.products];
                           const prod = products.find((p) => p.id === Number(e.target.value));
                           u[idx] = { ...u[idx], product_id: e.target.value, price: u[idx].price || String(prod?.price ?? '') };
                           setEditOrderForm({ ...editOrderForm, products: u });
                         }}
-                        className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm bg-gray-50 focus:outline-none focus:border-indigo-500"
-                      >
+                        className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:border-indigo-500">
                         <option value="">Select Product...</option>
                         {filtered.map((p) => <option key={p.id} value={p.id}>{p.name} (${p.price})</option>)}
                       </select>
-                      <input type="number" min="0" step="0.01" value={ep.price} onChange={(e) => { const u = [...editOrderForm.products]; u[idx].price = e.target.value; setEditOrderForm({ ...editOrderForm, products: u }); }} className="w-20 px-2 py-2 border border-gray-200 rounded-lg text-sm bg-gray-50 focus:outline-none focus:border-indigo-500" placeholder="Price" />
-                      <input type="number" min="1" value={ep.quantity} onChange={(e) => { const u = [...editOrderForm.products]; u[idx].quantity = e.target.value; setEditOrderForm({ ...editOrderForm, products: u }); }} className="w-14 px-2 py-2 border border-gray-200 rounded-lg text-sm bg-gray-50 focus:outline-none focus:border-indigo-500" placeholder="Qty" />
-                      {editOrderForm.products.length > 1 && (
-                        <button type="button" onClick={() => setEditOrderForm({ ...editOrderForm, products: editOrderForm.products.filter((_, i) => i !== idx) })} className="p-1 text-red-400 hover:text-red-600"><Trash2 size={13} /></button>
-                      )}
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="block text-[10px] text-gray-400 mb-1">Price ($)</label>
+                          <input type="number" min="0" step="0.01" value={ep.price}
+                            onChange={(e) => { const u = [...editOrderForm.products]; u[idx].price = e.target.value; setEditOrderForm({ ...editOrderForm, products: u }); }}
+                            className="w-full px-2.5 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:border-indigo-500" placeholder="0.00" />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] text-gray-400 mb-1">Quantity</label>
+                          <input type="number" min="1" value={ep.quantity}
+                            onChange={(e) => { const u = [...editOrderForm.products]; u[idx].quantity = e.target.value; setEditOrderForm({ ...editOrderForm, products: u }); }}
+                            className="w-full px-2.5 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:border-indigo-500" placeholder="1" />
+                        </div>
+                      </div>
                     </div>
                   );
                 })}
               </div>
             </div>
-            {/* Summary */}
+
+            {/* Live Summary */}
             {editOrderForm.products.some((p) => p.product_id) && (() => {
               const total = editOrderForm.products.reduce((s, ep) => {
-                const customPrice = Number(ep.price);
-                const prod = products.find((p) => p.id === Number(ep.product_id));
-                const unitPrice = customPrice > 0 ? customPrice : (prod?.price || 0);
+                const unitPrice = Number(ep.price) > 0 ? Number(ep.price) : (products.find((p) => p.id === Number(ep.product_id))?.price || 0);
                 return s + unitPrice * (Number(ep.quantity) || 1);
               }, 0);
               const profitAmt = total * (Number(editOrderForm.profit) / 100);
               return (
-                <div className="p-3 bg-indigo-50 rounded-xl text-xs space-y-1">
-                  <div className="flex justify-between"><span className="text-gray-600">Order Amount</span><span className="font-medium">${total.toFixed(2)}</span></div>
-                  <div className="flex justify-between"><span className="text-gray-600">Profit ({editOrderForm.profit}%)</span><span className="text-emerald-600 font-medium">+${profitAmt.toFixed(2)}</span></div>
-                  <div className="flex justify-between border-t border-indigo-200 pt-1"><span className="font-semibold">Total Income</span><span className="font-bold text-indigo-700">${(total + profitAmt).toFixed(2)}</span></div>
+                <div className="p-3 bg-indigo-50 rounded-xl text-xs space-y-1.5 border border-indigo-100">
+                  <p className="font-semibold text-indigo-700 mb-1">Order Summary</p>
+                  <div className="flex justify-between"><span className="text-gray-500">Order Amount</span><span className="font-medium">${total.toFixed(2)}</span></div>
+                  <div className="flex justify-between"><span className="text-gray-500">Commission ({editOrderForm.profit}%)</span><span className="text-emerald-600 font-medium">+${profitAmt.toFixed(2)}</span></div>
+                  <div className="flex justify-between border-t border-indigo-200 pt-1.5"><span className="font-semibold text-gray-800">Expected Income</span><span className="font-bold text-indigo-700">${(total + profitAmt).toFixed(2)}</span></div>
                 </div>
               );
             })()}
-            <div className="flex gap-3 pt-2">
+
+            <div className="flex gap-3 pt-1">
               <button type="button" onClick={() => setEditOrderModal(null)} className="flex-1 py-2.5 border border-gray-200 text-gray-700 text-sm font-medium rounded-xl hover:bg-gray-50">Cancel</button>
-              <button type="submit" disabled={saving} className="flex-1 py-2.5 bg-indigo-600 text-white text-sm font-medium rounded-xl hover:bg-indigo-700 disabled:opacity-50">{saving ? 'Saving...' : 'Save Changes'}</button>
+              <button type="submit" disabled={saving} className="flex-1 py-2.5 bg-indigo-600 text-white text-sm font-semibold rounded-xl hover:bg-indigo-700 disabled:opacity-50">{saving ? 'Saving...' : 'Save Changes'}</button>
             </div>
           </form>
         </Modal>
