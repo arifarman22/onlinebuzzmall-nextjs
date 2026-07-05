@@ -212,7 +212,11 @@ function ActiveTaskCard({ task, platformId, userBalance, freezeAmount }: {
           setDone(true);
         }
       } else {
-        setMessage(data.message || 'Failed');
+        if (data.message?.toLowerCase().includes('insufficient') || data.message?.toLowerCase().includes('balance')) {
+          router.push('/deposit');
+        } else {
+          setMessage(data.message || 'Failed');
+        }
       }
     } catch {
       setMessage('Something went wrong');
