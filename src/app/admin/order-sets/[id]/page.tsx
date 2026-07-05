@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/Card';
-import { Plus, Trash2, Edit2, X, Layers, ArrowLeft, Package, Upload } from 'lucide-react';
+import { Plus, Trash2, Edit2, X, Layers, ArrowLeft, Package, Upload, ToggleLeft, ToggleRight } from 'lucide-react';
 
 interface Order {
   id: number;
@@ -202,6 +202,20 @@ export default function ManageOrderSetPage() {
     setSaving(false);
   };
 
+  // Toggle order status
+  const handleToggleStatus = async (orderId: number, currentStatus: number) => {
+    try {
+      const res = await fetch('/api/admin/order-sets/update-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ order_id: orderId, status: currentStatus === 1 ? 0 : 1 }),
+      });
+      const data = await res.json();
+      if (data.success) fetchData();
+      else showMessage('error', data.message);
+    } catch { showMessage('error', 'Failed'); }
+  };
+
   // Delete order
   const handleDeleteOrder = async (orderId: number) => {
     if (!confirm('Delete this order?')) return;
@@ -354,6 +368,13 @@ export default function ManageOrderSetPage() {
                         </td>
                         <td className="py-3 px-4">
                           <div className="flex items-center gap-1">
+                            <button
+                              onClick={() => handleToggleStatus(order.id, order.status)}
+                              title={order.status === 1 ? 'Disable' : 'Enable'}
+                              className={`p-1 rounded ${order.status === 1 ? 'text-emerald-500 hover:text-emerald-700' : 'text-gray-300 hover:text-emerald-500'}`}
+                            >
+                              {order.status === 1 ? <ToggleRight size={18} /> : <ToggleLeft size={18} />}
+                            </button>
                             <button
                               onClick={() => {
                                 setEditOrderModal(order);
