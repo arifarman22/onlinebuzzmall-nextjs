@@ -57,7 +57,7 @@ export default function ManageOrderSetPage() {
 
   // Edit order modal
   const [editOrderModal, setEditOrderModal] = useState<Order | null>(null);
-  const [editOrderForm, setEditOrderForm] = useState<{ profit: string; platform_id: string; type: string; products: { product_id: string; quantity: string }[] }>({ profit: '', platform_id: '', type: 'single', products: [] });
+  const [editOrderForm, setEditOrderForm] = useState<{ profit: string; platform_id: string; type: string; products: { product_id: string; quantity: string; price: string }[] }>({ profit: '', platform_id: '', type: 'single', products: [] });
 
   // Add Order form
   const [orderForm, setOrderForm] = useState({ platform_id: '', product_id: '', profit: '5', price: 0, quantity: '1' });
@@ -192,6 +192,7 @@ export default function ManageOrderSetPage() {
           type: editOrderForm.type,
           product_ids: productIds,
           quantities: editOrderForm.products.filter((p) => p.product_id).map((p) => Number(p.quantity) || 1),
+          prices: editOrderForm.products.filter((p) => p.product_id).map((p) => Number(p.price) || 0),
         }),
       });
       const data = await res.json();
@@ -351,7 +352,7 @@ export default function ManageOrderSetPage() {
                                   profit: String(order.profit),
                                   platform_id: '',
                                   type: order.type || 'single',
-                                  products: order.orderDetails.map((d) => ({ product_id: String(d.product.id), quantity: String(d.quantity) })),
+                                  products: order.orderDetails.map((d) => ({ product_id: String(d.product.id), quantity: String(d.quantity), price: String(d.price) })),
                                 });
                               }}
                               className="p-1 text-indigo-400 hover:text-indigo-600"
@@ -381,7 +382,7 @@ export default function ManageOrderSetPage() {
                     key={t} type="button"
                     onClick={() => setEditOrderForm((f) => ({
                       ...f, type: t,
-                      products: t === 'single' ? [f.products[0] || { product_id: '', quantity: '1' }] : f.products,
+                      products: t === 'single' ? [f.products[0] || { product_id: '', quantity: '1', price: '' }] : f.products,
                     }))}
                     className={`flex-1 py-2 text-xs font-medium rounded-lg border transition-colors ${
                       editOrderForm.type === t
@@ -409,7 +410,7 @@ export default function ManageOrderSetPage() {
               <div className="flex items-center justify-between mb-2">
                 <label className="block text-xs font-medium text-gray-700">Products</label>
                 {editOrderForm.type === 'combo' && (
-                  <button type="button" onClick={() => setEditOrderForm({ ...editOrderForm, products: [...editOrderForm.products, { product_id: '', quantity: '1' }] })} className="text-xs text-indigo-600 hover:underline">+ Add</button>
+                  <button type="button" onClick={() => setEditOrderForm({ ...editOrderForm, products: [...editOrderForm.products, { product_id: '', quantity: '1', price: '' }] })} className="text-xs text-indigo-600 hover:underline">+ Add</button>
                 )}
               </div>
               <div className="space-y-2">
@@ -417,11 +418,21 @@ export default function ManageOrderSetPage() {
                   const filtered = editOrderForm.platform_id ? products.filter((p) => p.platform_id === Number(editOrderForm.platform_id)) : products;
                   return (
                     <div key={idx} className="flex items-center gap-2">
-                      <select value={ep.product_id} onChange={(e) => { const u = [...editOrderForm.products]; u[idx].product_id = e.target.value; setEditOrderForm({ ...editOrderForm, products: u }); }} className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm bg-gray-50 focus:outline-none focus:border-indigo-500">
+                      <select
+                        value={ep.product_id}
+                        onChange={(e) => {
+                          const u = [...editOrderForm.products];
+                          const prod = products.find((p) => p.id === Number(e.target.value));
+                          u[idx] = { ...u[idx], product_id: e.target.value, price: u[idx].price || String(prod?.price ?? '') };
+                          setEditOrderForm({ ...editOrderForm, products: u });
+                        }}
+                        className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm bg-gray-50 focus:outline-none focus:border-indigo-500"
+                      >
                         <option value="">Select Product...</option>
                         {filtered.map((p) => <option key={p.id} value={p.id}>{p.name} (${p.price})</option>)}
                       </select>
-                      <input type="number" min="1" value={ep.quantity} onChange={(e) => { const u = [...editOrderForm.products]; u[idx].quantity = e.target.value; setEditOrderForm({ ...editOrderForm, products: u }); }} className="w-16 px-2 py-2 border border-gray-200 rounded-lg text-sm bg-gray-50 focus:outline-none focus:border-indigo-500" placeholder="Qty" />
+                      <input type="number" min="0" step="0.01" value={ep.price} onChange={(e) => { const u = [...editOrderForm.products]; u[idx].price = e.target.value; setEditOrderForm({ ...editOrderForm, products: u }); }} className="w-20 px-2 py-2 border border-gray-200 rounded-lg text-sm bg-gray-50 focus:outline-none focus:border-indigo-500" placeholder="Price" />
+                      <input type="number" min="1" value={ep.quantity} onChange={(e) => { const u = [...editOrderForm.products]; u[idx].quantity = e.target.value; setEditOrderForm({ ...editOrderForm, products: u }); }} className="w-14 px-2 py-2 border border-gray-200 rounded-lg text-sm bg-gray-50 focus:outline-none focus:border-indigo-500" placeholder="Qty" />
                       {editOrderForm.products.length > 1 && (
                         <button type="button" onClick={() => setEditOrderForm({ ...editOrderForm, products: editOrderForm.products.filter((_, i) => i !== idx) })} className="p-1 text-red-400 hover:text-red-600"><Trash2 size={13} /></button>
                       )}
@@ -432,7 +443,12 @@ export default function ManageOrderSetPage() {
             </div>
             {/* Summary */}
             {editOrderForm.products.some((p) => p.product_id) && (() => {
-              const total = editOrderForm.products.reduce((s, ep) => { const prod = products.find((p) => p.id === Number(ep.product_id)); return s + (prod?.price || 0) * (Number(ep.quantity) || 1); }, 0);
+              const total = editOrderForm.products.reduce((s, ep) => {
+                const customPrice = Number(ep.price);
+                const prod = products.find((p) => p.id === Number(ep.product_id));
+                const unitPrice = customPrice > 0 ? customPrice : (prod?.price || 0);
+                return s + unitPrice * (Number(ep.quantity) || 1);
+              }, 0);
               const profitAmt = total * (Number(editOrderForm.profit) / 100);
               return (
                 <div className="p-3 bg-indigo-50 rounded-xl text-xs space-y-1">

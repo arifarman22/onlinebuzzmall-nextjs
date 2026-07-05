@@ -8,7 +8,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
   }
 
-  const { order_id, profit, product_ids, quantities, type } = await req.json();
+  const { order_id, profit, product_ids, quantities, prices, type } = await req.json();
   if (!order_id) return NextResponse.json({ success: false, message: 'order_id required' }, { status: 400 });
 
   await db.$transaction(async (tx) => {
@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
           order_id,
           product_id: pid,
           quantity: quantities?.[i] ?? 1,
-          price: products.find((p) => p.id === pid)?.price ?? 0,
+          price: prices?.[i] ?? products.find((p) => p.id === pid)?.price ?? 0,
         })),
       });
     }
