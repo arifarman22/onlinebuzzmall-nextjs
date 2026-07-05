@@ -314,7 +314,16 @@ export default function ManageOrderSetPage() {
                             {order.type === 'combo' ? 'Combo' : 'Single'}
                           </span>
                         </td>
-                        <td className="py-3 px-4 text-gray-700 max-w-[150px] truncate">{productNames || '-'}</td>
+                        <td className="py-3 px-4 text-gray-700">
+                          <div className="space-y-0.5">
+                            {order.orderDetails.map((d, di) => (
+                              <div key={di} className="text-xs">
+                                <span className="text-gray-800 font-medium">{d.product.name}</span>
+                                <span className="text-gray-400 ml-1">${d.price} × {d.quantity}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </td>
                         <td className="py-3 px-4 font-medium">${totalPrice.toFixed(2)}</td>
                         <td className="py-3 px-4 text-indigo-600">
                           {editingOrderId === order.id ? (
