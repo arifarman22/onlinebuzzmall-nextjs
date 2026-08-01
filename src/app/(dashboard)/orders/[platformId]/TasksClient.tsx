@@ -162,6 +162,7 @@ function ActiveTaskCard({ task, platformId, userBalance, freezeAmount }: {
   const [livePrice, setLivePrice] = useState<number>(task.price);
   const [liveProfit, setLiveProfit] = useState<number>(task.profit);
   const [liveProfitPercent, setLiveProfitPercent] = useState<number>(task.profitPercent);
+  const [confirmTime, setConfirmTime] = useState('');
 
   const availableBalance = userBalance - freezeAmount;
   const canAfford = availableBalance >= task.price;
@@ -183,6 +184,7 @@ function ActiveTaskCard({ task, platformId, userBalance, freezeAmount }: {
         if (data.price !== undefined) setLivePrice(data.price);
         if (data.profit !== undefined) setLiveProfit(data.profit);
         if (data.profit_percent !== undefined) setLiveProfitPercent(data.profit_percent);
+        setConfirmTime(new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }));
         setShowConfirm(true);
       } else {
         setMessage(data.message || 'Failed to start');
@@ -369,7 +371,7 @@ function ActiveTaskCard({ task, platformId, userBalance, freezeAmount }: {
             <div className="px-5 py-4 space-y-3 border-t border-gray-100 mt-4">
               <div className="flex justify-between items-center">
                 <span className="text-sm text-gray-500">Transaction Time</span>
-                <span className="text-sm text-gray-900">{typeof window !== 'undefined' ? new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : ''}</span>
+                <span className="text-sm text-gray-900">{confirmTime}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-gray-500">Order Amount</span>
