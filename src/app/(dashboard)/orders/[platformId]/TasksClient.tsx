@@ -282,10 +282,6 @@ function ActiveTaskCard({ task, platformId, userBalance, freezeAmount }: {
             >
               OK
             </button>
-            <style>{`
-              @keyframes circle-draw { to { stroke-dashoffset: 0; } }
-              @keyframes pop-in { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-            `}</style>
           </div>
         </div>
       </>
