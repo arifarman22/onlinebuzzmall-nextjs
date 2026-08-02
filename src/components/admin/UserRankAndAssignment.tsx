@@ -121,7 +121,7 @@ export default function UserRankAndAssignment({ userId, currentRankId }: Props) 
               <button onClick={seedRanks} className="text-xs text-indigo-600 hover:underline">Seed Default Ranks</button>
             </div>
           ) : (
-            <div className="flex items-center gap-3">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
               <select value={rankId} onChange={(e) => setRankId(Number(e.target.value))} className="flex-1 px-3 py-2.5 border border-gray-200 rounded-xl text-sm bg-gray-50 focus:outline-none focus:border-indigo-500">
                 <option value={0}>No Rank</option>
                 {ranks.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
@@ -141,14 +141,14 @@ export default function UserRankAndAssignment({ userId, currentRankId }: Props) 
             <Layers size={16} className="text-indigo-600" />
             <h3 className="text-sm font-semibold text-gray-900">Assign Order Set</h3>
           </div>
-          <div className="flex items-center gap-2 mb-4">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 mb-4">
             <select value={selectedSet} onChange={(e) => setSelectedSet(e.target.value)} className="flex-1 px-3 py-2.5 border border-gray-200 rounded-xl text-sm bg-gray-50 focus:outline-none focus:border-indigo-500">
               <option value="">Select Order Set...</option>
               {availableSets.map((os) => (
                 <option key={os.id} value={os.id}>{os.name} ({os.platform?.name}) — {os._count?.orders || 0} orders</option>
               ))}
             </select>
-            <button onClick={handleAssign} disabled={!selectedSet || saving === 'assign'} className="flex items-center gap-1 px-3 py-2.5 bg-indigo-600 text-white text-xs font-medium rounded-xl hover:bg-indigo-700 disabled:opacity-50">
+            <button onClick={handleAssign} disabled={!selectedSet || saving === 'assign'} className="flex items-center justify-center gap-1 px-4 py-2.5 bg-indigo-600 text-white text-xs font-medium rounded-xl hover:bg-indigo-700 disabled:opacity-50">
               <Plus size={13} /> {saving === 'assign' ? '...' : 'Assign'}
             </button>
           </div>
