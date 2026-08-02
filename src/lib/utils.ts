@@ -27,6 +27,19 @@ export function formatDateTime(date: Date | string): string {
   });
 }
 
+// Safe for client components — uses UTC to avoid server/client timezone mismatch
+export function formatDateUTC(date: Date | string): string {
+  const d = new Date(date);
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`;
+}
+
+export function formatDateTimeUTC(date: Date | string): string {
+  const d = new Date(date);
+  const datePart = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`;
+  const timePart = `${String(d.getUTCHours()).padStart(2, '0')}:${String(d.getUTCMinutes()).padStart(2, '0')}`;
+  return `${datePart} ${timePart}`;
+}
+
 export function generateTrx(length = 12): string {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
   let result = '';

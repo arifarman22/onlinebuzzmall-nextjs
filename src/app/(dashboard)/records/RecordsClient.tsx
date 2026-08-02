@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { CheckCircle, Clock, XCircle, History, Package, ArrowDownLeft, ArrowUpRight } from 'lucide-react';
-import { formatAmount } from '@/lib/utils';
+import { formatAmount, formatDateUTC, formatDateTimeUTC } from '@/lib/utils';
 
 interface Order {
   id: number; order_no: string | null; price: number; profit: number;
@@ -147,12 +147,12 @@ export default function RecordsClient({ orders, transactions }: Props) {
                     </div>
                   )}
                   <div className="flex items-center justify-between text-[10px] text-slate-600 pt-2 border-t border-slate-800">
-                    <span>{new Date(o.created_at).toLocaleDateString()}</span>
+                    <span>{formatDateUTC(o.created_at)}</span>
                     <span>Balance: {formatAmount(o.balance)}</span>
                   </div>
                   {o.status === 1 && (
                     <div className="mt-2 pt-2 border-t border-slate-800 grid grid-cols-2 gap-x-4 gap-y-1 text-[10px]">
-                      <div className="flex justify-between"><span className="text-slate-500">Transaction Time</span><span className="text-slate-300">{o.end_at ? new Date(o.end_at).toLocaleString() : '-'}</span></div>
+                      <div className="flex justify-between"><span className="text-slate-500">Transaction Time</span><span className="text-slate-300">{o.end_at ? formatDateTimeUTC(o.end_at) : '-'}</span></div>
                       <div className="flex justify-between"><span className="text-slate-500">Order Amount</span><span className="text-slate-300">{formatAmount(o.price)}</span></div>
                       <div className="flex justify-between"><span className="text-slate-500">Commission</span><span className="text-emerald-400">+{formatAmount(o.profit)}</span></div>
                       <div className="flex justify-between"><span className="text-slate-500">Expected Income</span><span className="text-indigo-400 font-medium">{formatAmount(o.price + o.profit)}</span></div>
@@ -195,7 +195,7 @@ export default function RecordsClient({ orders, transactions }: Props) {
                       <p className="text-[10px] text-slate-500">Bal: {formatAmount(t.balance)}</p>
                     </div>
                   </div>
-                  <p className="text-[10px] text-slate-600 mt-2 pt-2 border-t border-slate-800">{new Date(t.created_at).toLocaleString()}</p>
+                  <p className="text-[10px] text-slate-600 mt-2 pt-2 border-t border-slate-800">{formatDateTimeUTC(t.created_at)}</p>
                 </div>
               );
             })}
